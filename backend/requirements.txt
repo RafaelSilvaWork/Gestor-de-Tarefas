@@ -1,7 +1,11 @@
 fastapi>=0.110.0
 uvicorn>=0.28.0
 pydantic>=2.6.0
+sqlalchemy>=2.0.0
 passlib[bcrypt]
+# passlib (não mantido ativamente) não reconhece o bcrypt>=4.1, o que quebra
+# o hash de senha em instalações novas (AttributeError: bcrypt.__about__).
+bcrypt<4.1
 python-jose[cryptography]
 python-multipart
 python-dotenv>=1.0.0
