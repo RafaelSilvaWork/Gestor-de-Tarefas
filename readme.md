@@ -1,6 +1,6 @@
 # 🖥️ Gestor de Tarefas Híbrido (Desktop + API)
 
-[![Backend Tests](https://github.com/DuduProKill/Gestor-de-Tarefas/actions/workflows/backend-tests.yml/badge.svg)](https://github.com/DuduProKill/Gestor-de-Tarefas/actions/workflows/backend-tests.yml)
+[![Backend Tests](https://github.com/RafaelSilvaWork/Gestor-de-Tarefas/actions/workflows/backend-tests.yml/badge.svg)](https://github.com/RafaelSilvaWork/Gestor-de-Tarefas/actions/workflows/backend-tests.yml)
 
 > Uma aplicação full-stack de arquitetura desacoplada, combinando uma interface gráfica desktop nativa desenvolvida em **PyQt5** com um backend em **FastAPI** e banco de dados relacional.
 
