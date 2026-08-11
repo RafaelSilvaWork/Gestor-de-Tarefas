@@ -1,0 +1,106 @@
+def _obter_token(client, username="carol", password="senha123"):
+    client.post("/register", params={"username": username, "password": password})
+    r = client.post("/token", data={"username": username, "password": password})
+    return r.json()["access_token"]
+
+
+def test_registrar_usuario(client):
+    r = client.post("/register", params={"username": "alice", "password": "senha123"})
+    assert r.status_code == 201
+
+
+def test_registrar_usuario_duplicado(client):
+    client.post("/register", params={"username": "alice", "password": "senha123"})
+    r = client.post("/register", params={"username": "alice", "password": "outra"})
+    assert r.status_code == 400
+
+
+def test_login_sucesso(client):
+    client.post("/register", params={"username": "bob", "password": "senha123"})
+    r = client.post("/token", data={"username": "bob", "password": "senha123"})
+    assert r.status_code == 200
+    body = r.json()
+    assert body["token_type"] == "bearer"
+    assert body["access_token"]
+
+
+def test_login_senha_incorreta(client):
+    client.post("/register", params={"username": "bob", "password": "senha123"})
+    r = client.post("/token", data={"username": "bob", "password": "errada"})
+    assert r.status_code == 401
+
+
+def test_tarefas_exige_autenticacao(client):
+    r = client.get("/tarefas")
+    assert r.status_code == 401
+
+
+def test_criar_e_listar_tarefa(client):
+    token = _obter_token(client)
+    headers = {"Authorization": f"Bearer {token}"}
+
+    r = client.post(
+        "/tarefas",
+        json={"titulo": "Estudar FastAPI", "descricao": "Ler a documentação", "prioridade": "Alta"},
+        headers=headers,
+    )
+    assert r.status_code == 200
+    tarefa = r.json()
+    assert tarefa["titulo"] == "Estudar FastAPI"
+    assert tarefa["status"] == "Pendente"
+
+    r2 = client.get("/tarefas", headers=headers)
+    assert r2.status_code == 200
+    assert len(r2.json()) == 1
+
+
+def test_atualizar_status_tarefa(client):
+    token = _obter_token(client, username="dave")
+    headers = {"Authorization": f"Bearer {token}"}
+
+    r = client.post("/tarefas", json={"titulo": "Revisar PR", "prioridade": "Média"}, headers=headers)
+    tarefa_id = r.json()["id"]
+
+    r2 = client.patch(f"/tarefas/{tarefa_id}/status", params={"status": "Concluído"}, headers=headers)
+    assert r2.status_code == 200
+    assert r2.json()["status"] == "Concluído"
+
+
+def test_atualizar_status_tarefa_inexistente(client):
+    token = _obter_token(client, username="erin")
+    headers = {"Authorization": f"Bearer {token}"}
+
+    r = client.patch("/tarefas/9999/status", params={"status": "Concluído"}, headers=headers)
+    assert r.status_code == 404
+
+
+def test_isolamento_de_tarefas_entre_usuarios(client):
+    token_a = _obter_token(client, username="frank")
+    headers_a = {"Authorization": f"Bearer {token_a}"}
+    r = client.post("/tarefas", json={"titulo": "Tarefa do Frank", "prioridade": "Baixa"}, headers=headers_a)
+    tarefa_id = r.json()["id"]
+
+    token_b = _obter_token(client, username="grace")
+    headers_b = {"Authorization": f"Bearer {token_b}"}
+
+    r2 = client.get("/tarefas", headers=headers_b)
+    assert r2.json() == []
+
+    # Grace não pode alterar uma tarefa que pertence ao Frank.
+    r3 = client.patch(f"/tarefas/{tarefa_id}/status", params={"status": "Concluído"}, headers=headers_b)
+    assert r3.status_code == 404
+
+
+def test_filtro_por_status_e_prioridade(client):
+    token = _obter_token(client, username="heidi")
+    headers = {"Authorization": f"Bearer {token}"}
+
+    client.post("/tarefas", json={"titulo": "A", "prioridade": "Alta"}, headers=headers)
+    r = client.post("/tarefas", json={"titulo": "B", "prioridade": "Baixa"}, headers=headers)
+    client.patch(f"/tarefas/{r.json()['id']}/status", params={"status": "Concluído"}, headers=headers)
+
+    r_pendentes = client.get("/tarefas", params={"status": "Pendente"}, headers=headers)
+    assert [t["titulo"] for t in r_pendentes.json()] == ["A"]
+
+    r_baixa = client.get("/tarefas", params={"prioridade": "Baixa"}, headers=headers)
+    assert [t["titulo"] for t in r_baixa.json()] == ["B"]
