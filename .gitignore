@@ -23,6 +23,7 @@ backend/*.db.*
 build/
 dist/
 *.spec
+*.log
 
 # IDE
 .vscode/

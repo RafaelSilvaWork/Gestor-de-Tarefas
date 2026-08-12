@@ -12,6 +12,17 @@ Este projeto faz parte do meu portfólio de desenvolvimento de software e demons
 
 ---
 
+## ⬇️ Baixar e Testar (Windows)
+
+Não precisa instalar Python nem clonar o repositório para testar. Na [página de Releases](https://github.com/RafaelSilvaWork/Gestor-de-Tarefas/releases/latest), baixe:
+
+1. **`GestorDeTarefas-Backend.exe`** — dê dois cliques e deixe a janela aberta (é a API). Na primeira execução, ele cria automaticamente um `.env` com uma chave secreta e o banco `tarefas.db` na mesma pasta.
+2. **`GestorDeTarefas.exe`** — o cliente desktop. Com o backend já rodando, dê dois cliques, crie uma conta e use o app.
+
+> O Windows SmartScreen pode alertar por serem executáveis não assinados digitalmente ("Windows protegeu seu computador"). Clique em **Mais informações → Executar assim mesmo** — é esperado para binários gerados fora da Microsoft Store/lojas.
+
+---
+
 ## 📸 Screenshots
 
 | Painel | Tarefas |
@@ -68,12 +79,13 @@ Gestor-de-Tarefas/
 │   │   ├── schemas.py        # Schemas Pydantic (request/response)
 │   │   └── security.py       # Hash de senha, JWT e dependência de autenticação
 │   ├── tests/                # Testes automatizados (pytest)
+│   ├── run.py                # Ponto de entrada usado para gerar o .exe (PyInstaller)
 │   ├── .env.example          # Modelo de variáveis de ambiente
 │   ├── requirements.txt
 │   └── requirements-dev.txt  # Dependências de desenvolvimento (inclui pytest)
 │
 ├── desktop/                  # Cliente Gráfico Nativo
-│   ├── assets/                # Estilos QSS
+│   ├── assets/                # Estilos QSS e ícone do executável
 │   ├── services/               # Integração HTTP com a API
 │   ├── views/                   # Janelas e componentes em PyQt5
 │   ├── main.py                # Ponto de entrada da GUI
