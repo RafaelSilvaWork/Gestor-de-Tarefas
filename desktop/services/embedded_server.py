@@ -29,7 +29,11 @@ class ServidorEmbutido(threading.Thread):
         super().__init__(daemon=True)
         import uvicorn
 
-        self._config = uvicorn.Config(app, host=host, port=port, log_level="warning")
+        # log_config=None: evita que o uvicorn configure seu logging colorido
+        # padrão, que chama sys.stderr.isatty() — em um build --windowed do
+        # PyInstaller sys.stderr é None (não há console), e isso quebra com
+        # "AttributeError: 'NoneType' object has no attribute 'isatty'".
+        self._config = uvicorn.Config(app, host=host, port=port, log_level="warning", log_config=None)
         self.server = uvicorn.Server(self._config)
         self.erro = None
 

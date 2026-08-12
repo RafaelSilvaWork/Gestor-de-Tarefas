@@ -3,6 +3,17 @@ import os
 import secrets
 import traceback
 
+# Em um build --windowed do PyInstaller não existe console, então
+# sys.stdout/sys.stderr são None (não apenas "não é um terminal"). Várias
+# bibliotecas (uvicorn incluso) presumem que sempre são objetos de arquivo
+# válidos e quebram com "AttributeError: 'NoneType' object has no attribute
+# ...". Substituir por um destino nulo antes de qualquer outro import evita
+# essa classe inteira de erro.
+if sys.stdout is None:
+    sys.stdout = open(os.devnull, "w")
+if sys.stderr is None:
+    sys.stderr = open(os.devnull, "w")
+
 from PyQt5.QtWidgets import QApplication, QDialog, QMessageBox
 
 if getattr(sys, "frozen", False):
@@ -61,6 +72,8 @@ def _iniciar_backend_embutido():
 
     try:
         from app.main import app as backend_app
+        servidor = ServidorEmbutido(backend_app, host=HOST_API, port=PORTA_API)
+        servidor.start()
     except Exception as e:
         _exibir_erro_fatal(
             "Não foi possível iniciar",
@@ -69,9 +82,6 @@ def _iniciar_backend_embutido():
             erro=e,
         )
         return None
-
-    servidor = ServidorEmbutido(backend_app, host=HOST_API, port=PORTA_API)
-    servidor.start()
 
     if not servidor.aguardar_pronto(timeout=10):
         _exibir_erro_fatal(
