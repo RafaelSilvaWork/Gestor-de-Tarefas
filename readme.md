@@ -14,12 +14,11 @@ Este projeto faz parte do meu portfólio de desenvolvimento de software e demons
 
 ## ⬇️ Baixar e Testar (Windows)
 
-Não precisa instalar Python nem clonar o repositório para testar. Na [página de Releases](https://github.com/RafaelSilvaWork/Gestor-de-Tarefas/releases/latest), baixe:
+Não precisa instalar Python nem clonar o repositório para testar. Baixe **`GestorDeTarefas.exe`** na [página de Releases](https://github.com/RafaelSilvaWork/Gestor-de-Tarefas/releases/latest) e dê dois cliques.
 
-1. **`GestorDeTarefas-Backend.exe`** — dê dois cliques e deixe a janela aberta (é a API). Na primeira execução, ele cria automaticamente um `.env` com uma chave secreta e o banco `tarefas.db` na mesma pasta.
-2. **`GestorDeTarefas.exe`** — o cliente desktop. Com o backend já rodando, dê dois cliques, crie uma conta e use o app.
+O backend (API) roda embutido no próprio processo do app — não existe mais um segundo executável para abrir. Na primeira execução, o app cria automaticamente um `.env` com uma chave secreta e o banco `tarefas.db` na mesma pasta do `.exe`. Se a porta 8000 já estiver em uso por outro programa (ou outra instância do app), uma mensagem de erro clara é exibida na própria interface, com detalhes técnicos disponíveis em "Show Details".
 
-> O Windows SmartScreen pode alertar por serem executáveis não assinados digitalmente ("Windows protegeu seu computador"). Clique em **Mais informações → Executar assim mesmo** — é esperado para binários gerados fora da Microsoft Store/lojas.
+> O Windows SmartScreen pode alertar por ser um executável não assinado digitalmente ("Windows protegeu seu computador"). Clique em **Mais informações → Executar assim mesmo** — é esperado para binários gerados fora da Microsoft Store/lojas.
 
 ---
 
@@ -86,7 +85,7 @@ Gestor-de-Tarefas/
 │
 ├── desktop/                  # Cliente Gráfico Nativo
 │   ├── assets/                # Estilos QSS e ícone do executável
-│   ├── services/               # Integração HTTP com a API
+│   ├── services/               # Integração HTTP com a API + servidor embutido (empacotado)
 │   ├── views/                   # Janelas e componentes em PyQt5
 │   ├── main.py                # Ponto de entrada da GUI
 │   └── requirements.txt
@@ -96,7 +95,9 @@ Gestor-de-Tarefas/
 
 ---
 
-## ▶️ Como Executar
+## ▶️ Como Executar (a partir do código-fonte)
+
+> Isto é para desenvolvimento (dois processos separados, com hot-reload e logs do backend visíveis). Para apenas usar o app, veja [Baixar e Testar](#️-baixar-e-testar-windows).
 
 ### 1. Backend (API)
 
