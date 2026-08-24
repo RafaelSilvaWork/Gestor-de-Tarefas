@@ -387,7 +387,10 @@ class MainWindow(QMainWindow):
             return
 
         dados = modal.dados()
-        sucesso = criar_tarefa(self.token, dados["titulo"], dados["descricao"], dados["prioridade"])
+        sucesso = criar_tarefa(
+            self.token, dados["titulo"], dados["descricao"], dados["prioridade"],
+            data_vencimento=dados["data_vencimento"], tags=dados["tags"],
+        )
         if sucesso:
             self.carregar_tarefas()
             self.status_bar.showMessage("Tarefa adicionada com sucesso!", 4000)
@@ -405,7 +408,10 @@ class MainWindow(QMainWindow):
             return
 
         dados = modal.dados()
-        resultado = atualizar_tarefa(self.token, tarefa_id, dados["titulo"], dados["descricao"], dados["prioridade"])
+        resultado = atualizar_tarefa(
+            self.token, tarefa_id, dados["titulo"], dados["descricao"], dados["prioridade"],
+            data_vencimento=dados["data_vencimento"], tags=dados["tags"],
+        )
         if resultado:
             self.carregar_tarefas()
             self.status_bar.showMessage("Tarefa atualizada com sucesso!", 4000)

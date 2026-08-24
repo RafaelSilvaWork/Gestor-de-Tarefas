@@ -4,11 +4,13 @@ from sqlalchemy.orm import Session
 from typing import List, Optional
 
 # Certifique-se de que os imports abaixo correspondem à estrutura da sua pasta backend/app
-from .database import engine, Base, get_db
+from .database import engine, Base, get_db, aplicar_migracoes_leves
 from . import models, schemas
 from .security import verify_password, get_password_hash, create_access_token, get_current_user
 # Cria as tabelas no banco de dados se não existirem
 Base.metadata.create_all(bind=engine)
+# Adiciona colunas novas a um tarefas.db já existente (ver database.py)
+aplicar_migracoes_leves()
 
 app = FastAPI(title="Gestor de Tarefas API", version="1.0")
 
@@ -68,6 +70,8 @@ def criar_tarefa(
         titulo=tarefa.titulo,
         descricao=tarefa.descricao,
         prioridade=tarefa.prioridade,
+        data_vencimento=tarefa.data_vencimento,
+        tags=tarefa.tags,
         status="Pendente",
         usuario_id=current_user.id
     )
@@ -95,6 +99,8 @@ def editar_tarefa(
     tarefa.titulo = dados.titulo
     tarefa.descricao = dados.descricao
     tarefa.prioridade = dados.prioridade
+    tarefa.data_vencimento = dados.data_vencimento
+    tarefa.tags = dados.tags
     db.commit()
     db.refresh(tarefa)
     return tarefa

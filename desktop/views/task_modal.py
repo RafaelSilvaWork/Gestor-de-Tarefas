@@ -1,7 +1,9 @@
-from PyQt5.QtCore import Qt
+from datetime import datetime, timedelta
+
+from PyQt5.QtCore import Qt, QDateTime
 from PyQt5.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QTextEdit,
-    QComboBox, QPushButton, QFrame, QMessageBox,
+    QComboBox, QPushButton, QFrame, QMessageBox, QCheckBox, QDateTimeEdit,
 )
 
 
@@ -60,6 +62,30 @@ class TaskModal(QDialog):
         self.combo_prioridade.setObjectName("ModalInput")
         self.combo_prioridade.addItems(["Baixa", "Média", "Alta", "Urgente"])
         layout.addWidget(self.combo_prioridade)
+        layout.addSpacing(14)
+
+        linha_prazo = QHBoxLayout()
+        linha_prazo.setSpacing(10)
+        self.check_prazo = QCheckBox("Definir prazo")
+        self.check_prazo.setObjectName("ModalFieldLabel")
+        self.check_prazo.toggled.connect(self._alternar_prazo)
+        linha_prazo.addWidget(self.check_prazo)
+
+        self.input_prazo = QDateTimeEdit()
+        self.input_prazo.setObjectName("ModalInput")
+        self.input_prazo.setCalendarPopup(True)
+        self.input_prazo.setDisplayFormat("dd/MM/yyyy HH:mm")
+        self.input_prazo.setDateTime(QDateTime.currentDateTime().addDays(1))
+        self.input_prazo.setEnabled(False)
+        linha_prazo.addWidget(self.input_prazo, stretch=1)
+        layout.addLayout(linha_prazo)
+        layout.addSpacing(14)
+
+        layout.addWidget(self._label_campo("TAGS (separadas por vírgula)"))
+        self.input_tags = QLineEdit()
+        self.input_tags.setObjectName("ModalInput")
+        self.input_tags.setPlaceholderText("Ex: Vendas, Cliente-X")
+        layout.addWidget(self.input_tags)
 
         if tarefa:
             self.input_titulo.setText(tarefa.get("titulo", ""))
@@ -67,6 +93,15 @@ class TaskModal(QDialog):
             idx = self.combo_prioridade.findText(tarefa.get("prioridade", "Média"))
             if idx >= 0:
                 self.combo_prioridade.setCurrentIndex(idx)
+
+            data_vencimento = tarefa.get("data_vencimento")
+            if data_vencimento:
+                dt = datetime.fromisoformat(data_vencimento)
+                self.input_prazo.setDateTime(QDateTime(dt))
+                self.check_prazo.setChecked(True)
+
+            tags = tarefa.get("tags") or []
+            self.input_tags.setText(", ".join(tags))
 
         botoes = QHBoxLayout()
         botoes.setContentsMargins(0, 24, 0, 0)
@@ -93,6 +128,9 @@ class TaskModal(QDialog):
         lbl.setObjectName("ModalFieldLabel")
         return lbl
 
+    def _alternar_prazo(self, marcado):
+        self.input_prazo.setEnabled(marcado)
+
     def _validar_e_aceitar(self):
         if not self.input_titulo.text().strip():
             QMessageBox.warning(self, "Aviso", "O título da tarefa não pode estar vazio!")
@@ -100,8 +138,15 @@ class TaskModal(QDialog):
         self.accept()
 
     def dados(self):
+        tags = [t.strip() for t in self.input_tags.text().split(",") if t.strip()]
+        data_vencimento = None
+        if self.check_prazo.isChecked():
+            data_vencimento = self.input_prazo.dateTime().toPyDateTime()
+
         return {
             "titulo": self.input_titulo.text().strip(),
             "descricao": self.input_descricao.toPlainText().strip(),
             "prioridade": self.combo_prioridade.currentText(),
+            "data_vencimento": data_vencimento,
+            "tags": tags,
         }

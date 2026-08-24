@@ -1,3 +1,5 @@
+from datetime import datetime, timedelta
+
 from PyQt5.QtCore import Qt, QPropertyAnimation, QEasingCurve, pyqtSignal
 from PyQt5.QtGui import QColor
 from PyQt5.QtWidgets import (
@@ -6,6 +8,22 @@ from PyQt5.QtWidgets import (
 )
 
 from services.theme import PRIORIDADES, INDIGO, rgba
+
+DIAS_SEMANA = ["Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado", "Domingo"]
+
+
+def _formatar_prazo(dt):
+    agora = datetime.now()
+    hoje = agora.date()
+    hora = dt.strftime("%H:%M")
+
+    if dt.date() == hoje:
+        return f"Hoje, {hora}"
+    if dt.date() == hoje + timedelta(days=1):
+        return f"Amanhã, {hora}"
+    if hoje < dt.date() < hoje + timedelta(days=7):
+        return f"{DIAS_SEMANA[dt.weekday()]}, {hora}"
+    return dt.strftime("%d/%m/%Y, %H:%M")
 
 
 class TaskCard(QFrame):
@@ -86,8 +104,30 @@ class TaskCard(QFrame):
         status_lbl.setProperty("concluida", concluida)
         linha_meta.addWidget(status_lbl)
 
+        data_vencimento = tarefa.get("data_vencimento")
+        if data_vencimento:
+            dt = datetime.fromisoformat(data_vencimento)
+            atrasada = dt < datetime.now() and not concluida
+
+            data_lbl = QLabel(f"📅 {_formatar_prazo(dt)}")
+            data_lbl.setObjectName("TaskDate")
+            if atrasada:
+                data_lbl.setStyleSheet("color: #ef4444; text-decoration: underline; background: transparent;")
+            linha_meta.addWidget(data_lbl)
+
         linha_meta.addStretch()
         corpo.addLayout(linha_meta)
+
+        tags = tarefa.get("tags") or []
+        if tags:
+            linha_tags = QHBoxLayout()
+            linha_tags.setSpacing(6)
+            for tag in tags:
+                tag_lbl = QLabel(tag)
+                tag_lbl.setObjectName("TaskTag")
+                linha_tags.addWidget(tag_lbl)
+            linha_tags.addStretch()
+            corpo.addLayout(linha_tags)
 
         layout.addLayout(corpo, stretch=1)
 

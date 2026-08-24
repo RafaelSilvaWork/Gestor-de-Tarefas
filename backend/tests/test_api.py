@@ -153,6 +153,60 @@ def test_excluir_tarefa_de_outro_usuario_falha(client):
     assert len(r3.json()) == 1
 
 
+def test_criar_tarefa_com_prazo_e_tags(client):
+    token = _obter_token(client, username="nadia")
+    headers = {"Authorization": f"Bearer {token}"}
+
+    r = client.post(
+        "/tarefas",
+        json={
+            "titulo": "Fechar contrato",
+            "prioridade": "Urgente",
+            "data_vencimento": "2026-12-01T18:00:00",
+            "tags": ["Vendas", "Cliente-X"],
+        },
+        headers=headers,
+    )
+    assert r.status_code == 200
+    tarefa = r.json()
+    assert tarefa["data_vencimento"].startswith("2026-12-01T18:00:00")
+    assert tarefa["tags"] == ["Vendas", "Cliente-X"]
+
+
+def test_criar_tarefa_sem_prazo_nem_tags(client):
+    token = _obter_token(client, username="oscar")
+    headers = {"Authorization": f"Bearer {token}"}
+
+    r = client.post("/tarefas", json={"titulo": "Tarefa simples", "prioridade": "Baixa"}, headers=headers)
+    assert r.status_code == 200
+    tarefa = r.json()
+    assert tarefa["data_vencimento"] is None
+    assert tarefa["tags"] is None
+
+
+def test_editar_tarefa_atualiza_prazo_e_tags(client):
+    token = _obter_token(client, username="paula")
+    headers = {"Authorization": f"Bearer {token}"}
+
+    r = client.post("/tarefas", json={"titulo": "Rascunho", "prioridade": "Baixa"}, headers=headers)
+    tarefa_id = r.json()["id"]
+
+    r2 = client.put(
+        f"/tarefas/{tarefa_id}",
+        json={
+            "titulo": "Rascunho",
+            "prioridade": "Alta",
+            "data_vencimento": "2026-11-15T09:00:00",
+            "tags": ["Urgente-Interno"],
+        },
+        headers=headers,
+    )
+    assert r2.status_code == 200
+    tarefa = r2.json()
+    assert tarefa["data_vencimento"].startswith("2026-11-15T09:00:00")
+    assert tarefa["tags"] == ["Urgente-Interno"]
+
+
 def test_filtro_por_status_e_prioridade(client):
     token = _obter_token(client, username="heidi")
     headers = {"Authorization": f"Bearer {token}"}

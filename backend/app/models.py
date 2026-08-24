@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, ForeignKey
+from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, JSON
 from sqlalchemy.orm import relationship
 
 from .database import Base
@@ -22,6 +22,8 @@ class Tarefa(Base):
     descricao = Column(String, nullable=True)
     status = Column(String, default="Pendente")
     prioridade = Column(String, default="Média")
+    data_vencimento = Column(DateTime, nullable=True)
+    tags = Column(JSON, nullable=True)  # lista de strings, ex: ["Vendas", "Cliente-X"]
     usuario_id = Column(Integer, ForeignKey("usuarios.id"), nullable=False)
 
     usuario = relationship("Usuario", back_populates="tarefas")
