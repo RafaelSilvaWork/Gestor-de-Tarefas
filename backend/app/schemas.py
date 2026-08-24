@@ -62,3 +62,12 @@ class MembroResponse(BaseModel):
 
 class AlterarPapelRequest(BaseModel):
     papel: str
+
+
+class MeResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    username: str
+    papel: Optional[str] = None
+    grupo_id: Optional[int] = None

@@ -69,6 +69,11 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
     access_token = create_access_token(data={"sub": usuario.username})
     return {"access_token": access_token, "token_type": "bearer"}
 
+# --- ROTA DE DADOS DO USUÁRIO LOGADO (username, papel, grupo) ---
+@app.get("/me", response_model=schemas.MeResponse)
+def me(current_user: models.Usuario = Depends(get_current_user)):
+    return current_user
+
 
 # ==================== GRUPOS (equipes) ====================
 

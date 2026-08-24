@@ -30,6 +30,16 @@ def test_login_senha_incorreta(client):
     assert r.status_code == 401
 
 
+def test_me_retorna_dados_do_usuario_logado(client):
+    token = _obter_token(client, username="quenia")
+    r = client.get("/me", headers={"Authorization": f"Bearer {token}"})
+    assert r.status_code == 200
+    dados = r.json()
+    assert dados["username"] == "quenia"
+    assert dados["papel"] is None
+    assert dados["grupo_id"] is None
+
+
 def test_tarefas_exige_autenticacao(client):
     r = client.get("/tarefas")
     assert r.status_code == 401
