@@ -16,6 +16,20 @@ def get_db():
         db.close()
 
 
+COLUNAS_NOVAS_POR_TABELA = {
+    "tarefas": {
+        "data_vencimento": "DATETIME",
+        "tags": "JSON",
+        "atribuido_a_id": "INTEGER",
+        "grupo_id": "INTEGER",
+    },
+    "usuarios": {
+        "grupo_id": "INTEGER",
+        "papel": "VARCHAR",
+    },
+}
+
+
 def aplicar_migracoes_leves():
     """
     Base.metadata.create_all() só cria tabelas que ainda não existem — não
@@ -26,16 +40,13 @@ def aplicar_migracoes_leves():
     mais complexos).
     """
     inspetor = inspect(engine)
-    if "tarefas" not in inspetor.get_table_names():
-        return
-
-    colunas_existentes = {c["name"] for c in inspetor.get_columns("tarefas")}
-    colunas_novas = {
-        "data_vencimento": "DATETIME",
-        "tags": "JSON",
-    }
+    tabelas_existentes = set(inspetor.get_table_names())
 
     with engine.begin() as conexao:
-        for nome, tipo_sql in colunas_novas.items():
-            if nome not in colunas_existentes:
-                conexao.execute(text(f"ALTER TABLE tarefas ADD COLUMN {nome} {tipo_sql}"))
+        for tabela, colunas_novas in COLUNAS_NOVAS_POR_TABELA.items():
+            if tabela not in tabelas_existentes:
+                continue
+            colunas_existentes = {c["name"] for c in inspetor.get_columns(tabela)}
+            for nome, tipo_sql in colunas_novas.items():
+                if nome not in colunas_existentes:
+                    conexao.execute(text(f"ALTER TABLE {tabela} ADD COLUMN {nome} {tipo_sql}"))
