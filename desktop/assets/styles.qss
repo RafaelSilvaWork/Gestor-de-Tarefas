@@ -137,8 +137,8 @@ QLabel {
 }
 
 /* --- CAMPOS DE ENTRADA (INPUTS) --- */
-QLineEdit, QTextEdit, QComboBox {
-    background-color: rgba(15, 23, 42, 0.5);
+QLineEdit, QTextEdit, QComboBox, QDateTimeEdit, QDateEdit, QTimeEdit, QSpinBox, QDoubleSpinBox {
+    background-color: #1a2236;
     color: #f1f5f9;
     border: 1px solid rgba(99, 102, 241, 0.3);
     border-radius: 10px;
@@ -152,13 +152,15 @@ QLineEdit::placeholder, QTextEdit::placeholder {
     color: rgba(203, 213, 225, 0.45);
 }
 
-QLineEdit:hover, QTextEdit:hover, QComboBox:hover {
+QLineEdit:hover, QTextEdit:hover, QComboBox:hover,
+QDateTimeEdit:hover, QDateEdit:hover, QTimeEdit:hover, QSpinBox:hover, QDoubleSpinBox:hover {
     border: 1px solid rgba(99, 102, 241, 0.5);
 }
 
-QLineEdit:focus, QTextEdit:focus, QComboBox:focus {
+QLineEdit:focus, QTextEdit:focus, QComboBox:focus,
+QDateTimeEdit:focus, QDateEdit:focus, QTimeEdit:focus, QSpinBox:focus, QDoubleSpinBox:focus {
     border: 1px solid #6366f1;
-    background-color: rgba(15, 23, 42, 0.8);
+    background-color: #1e2842;
 }
 
 QComboBox::drop-down {
@@ -171,6 +173,25 @@ QComboBox::drop-down {
 QComboBox::down-arrow {
     width: 10px;
     height: 10px;
+}
+
+QDateTimeEdit::drop-down, QDateEdit::drop-down {
+    subcontrol-origin: padding;
+    subcontrol-position: top right;
+    width: 26px;
+    border-left: 1px solid rgba(99, 102, 241, 0.3);
+    border-top-right-radius: 10px;
+    border-bottom-right-radius: 10px;
+}
+
+QDateTimeEdit::up-button, QDateTimeEdit::down-button,
+QDateEdit::up-button, QDateEdit::down-button,
+QTimeEdit::up-button, QTimeEdit::down-button,
+QSpinBox::up-button, QSpinBox::down-button,
+QDoubleSpinBox::up-button, QDoubleSpinBox::down-button {
+    width: 16px;
+    border: none;
+    background: transparent;
 }
 
 QComboBox QAbstractItemView {
