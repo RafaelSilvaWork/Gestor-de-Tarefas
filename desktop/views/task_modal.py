@@ -9,10 +9,16 @@ from PyQt5.QtWidgets import (
 
 
 class TaskModal(QDialog):
-    """Modal de criar/editar tarefa. Passe `tarefa` para pré-popular (modo edição)."""
+    """
+    Modal de criar/editar tarefa. Passe `tarefa` para pré-popular (modo
+    edição). Passe `membros` (lista de dicts {id, username}) para mostrar o
+    seletor "Atribuir a" — só deve ser passado quando quem abre o modal é
+    admin de um grupo; o servidor ignora atribuido_a_id vindo de quem não é.
+    """
 
-    def __init__(self, parent=None, tarefa=None):
+    def __init__(self, parent=None, tarefa=None, membros=None):
         super().__init__(parent)
+        self._membros = membros or []
         self.setWindowFlags(self.windowFlags() | Qt.FramelessWindowHint)
         self.setModal(True)
         self.setFixedWidth(520)
@@ -65,6 +71,16 @@ class TaskModal(QDialog):
         layout.addWidget(self.combo_prioridade)
         layout.addSpacing(14)
 
+        self.combo_atribuir = None
+        if self._membros:
+            layout.addWidget(self._label_campo("ATRIBUIR A"))
+            self.combo_atribuir = QComboBox()
+            self.combo_atribuir.setObjectName("ModalInput")
+            for membro in self._membros:
+                self.combo_atribuir.addItem(membro["username"], membro["id"])
+            layout.addWidget(self.combo_atribuir)
+            layout.addSpacing(14)
+
         linha_prazo = QHBoxLayout()
         linha_prazo.setSpacing(10)
         self.check_prazo = QCheckBox("Definir prazo")
@@ -104,6 +120,11 @@ class TaskModal(QDialog):
 
             tags = tarefa.get("tags") or []
             self.input_tags.setText(", ".join(tags))
+
+            if self.combo_atribuir is not None and tarefa.get("atribuido_a_id") is not None:
+                idx_membro = self.combo_atribuir.findData(tarefa["atribuido_a_id"])
+                if idx_membro >= 0:
+                    self.combo_atribuir.setCurrentIndex(idx_membro)
 
         botoes = QHBoxLayout()
         botoes.setContentsMargins(0, 24, 0, 0)
@@ -157,10 +178,15 @@ class TaskModal(QDialog):
         if self.check_prazo.isChecked():
             data_vencimento = self.input_prazo.dateTime().toPyDateTime()
 
+        atribuido_a_id = None
+        if self.combo_atribuir is not None:
+            atribuido_a_id = self.combo_atribuir.currentData()
+
         return {
             "titulo": self.input_titulo.text().strip(),
             "descricao": self.input_descricao.toPlainText().strip(),
             "prioridade": self.combo_prioridade.currentText(),
             "data_vencimento": data_vencimento,
             "tags": tags,
+            "atribuido_a_id": atribuido_a_id,
         }

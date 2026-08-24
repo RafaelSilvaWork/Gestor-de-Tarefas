@@ -15,13 +15,14 @@ from PyQt5.QtPrintSupport import QPrinter
 
 from services.api_client import (
     buscar_tarefas, criar_tarefa, atualizar_status_tarefa,
-    atualizar_tarefa, excluir_tarefa,
+    atualizar_tarefa, excluir_tarefa, buscar_meu_usuario, buscar_membros,
 )
 from views.dashboard_widget import DashboardWidget
 from views.task_card import TaskCard
 from views.task_modal import TaskModal
 from views.filter_pill import FilterPill
 from views.empty_state import EmptyState
+from views.team_page import TeamPage
 
 SIDEBAR_COLLAPSED_WIDTH = 56
 SIDEBAR_EXPANDED_WIDTH = 200
@@ -38,6 +39,7 @@ class MainWindow(QMainWindow):
         self.tarefas_atuais = []  # Última lista carregada (respeitando filtros), usada na exportação e nos cards
         self.filtro_status_atual = "Todos"
         self.filtro_prioridade_atual = "Todas"
+        self.meu_usuario = buscar_meu_usuario(self.token) or {}
 
         try:
             DWMWA_USE_IMMERSIVE_DARK_MODE = 20
@@ -80,7 +82,11 @@ class MainWindow(QMainWindow):
         content_layout.setContentsMargins(32, 28, 32, 28)
         content_layout.setSpacing(20)
 
-        self.page_titles = {0: ("Painel", "Visão geral das suas tarefas"), 1: ("Minhas Tarefas", "Cadastre e gerencie suas entregas")}
+        self.page_titles = {
+            0: ("Painel", "Visão geral das suas tarefas"),
+            1: ("Minhas Tarefas", "Cadastre e gerencie suas entregas"),
+            2: ("Equipe", "Gerencie seu grupo de trabalho"),
+        }
 
         header_layout = QHBoxLayout()
         header_text = QVBoxLayout()
@@ -107,6 +113,7 @@ class MainWindow(QMainWindow):
 
         self.stack.addWidget(self._criar_pagina_painel())
         self.stack.addWidget(self._criar_pagina_tarefas())
+        self.stack.addWidget(self._criar_pagina_equipe())
 
         # --- Barra de Status Inferior ---
         self.status_bar = QStatusBar()
@@ -202,13 +209,21 @@ class MainWindow(QMainWindow):
         self.btn_nav_tarefas.setCursor(Qt.PointingHandCursor)
         self.btn_nav_tarefas.clicked.connect(lambda: self.mudar_pagina(1))
 
+        self.btn_nav_equipe = QPushButton("👥")
+        self.btn_nav_equipe.setObjectName("NavButton")
+        self.btn_nav_equipe.setCheckable(True)
+        self.btn_nav_equipe.setCursor(Qt.PointingHandCursor)
+        self.btn_nav_equipe.clicked.connect(lambda: self.mudar_pagina(2))
+
         self.nav_group = QButtonGroup(self)
         self.nav_group.setExclusive(True)
         self.nav_group.addButton(self.btn_nav_painel, 0)
         self.nav_group.addButton(self.btn_nav_tarefas, 1)
+        self.nav_group.addButton(self.btn_nav_equipe, 2)
 
         sidebar_layout.addWidget(self.btn_nav_painel)
         sidebar_layout.addWidget(self.btn_nav_tarefas)
+        sidebar_layout.addWidget(self.btn_nav_equipe)
         sidebar_layout.addStretch()
 
         return self.sidebar
@@ -290,6 +305,10 @@ class MainWindow(QMainWindow):
         layout.addLayout(actions_layout)
         return page
 
+    def _criar_pagina_equipe(self):
+        self.team_page = TeamPage(self.token, on_grupo_alterado=self._ao_alterar_grupo)
+        return self.team_page
+
     # ------------------------------------------------------------------
     # Navegação
     # ------------------------------------------------------------------
@@ -300,12 +319,14 @@ class MainWindow(QMainWindow):
             self.sidebar.setFixedWidth(SIDEBAR_EXPANDED_WIDTH)
             self.btn_nav_painel.setText("📊  Painel")
             self.btn_nav_tarefas.setText("✅  Tarefas")
+            self.btn_nav_equipe.setText("👥  Equipe")
         else:
             self.sidebar.setFixedWidth(SIDEBAR_COLLAPSED_WIDTH)
             self.btn_nav_painel.setText("📊")
             self.btn_nav_tarefas.setText("✅")
+            self.btn_nav_equipe.setText("👥")
 
-        for btn in (self.btn_nav_painel, self.btn_nav_tarefas):
+        for btn in (self.btn_nav_painel, self.btn_nav_tarefas, self.btn_nav_equipe):
             btn.setProperty("expanded", self.sidebar_expanded)
             btn.style().unpolish(btn)
             btn.style().polish(btn)
@@ -319,6 +340,14 @@ class MainWindow(QMainWindow):
         self.btn_adicionar.setVisible(index == 1)
         if index == 0:
             self.carregar_tarefas()
+        elif index == 2:
+            self.team_page.recarregar()
+
+    def _ao_alterar_grupo(self):
+        """Chamado pela TeamPage após criar/entrar/sair/mudar papel — o que
+        aparece nas tarefas (e quem pode ver o quê) depende do grupo."""
+        self.meu_usuario = buscar_meu_usuario(self.token) or {}
+        self.carregar_tarefas()
 
     # ------------------------------------------------------------------
     # Filtros
@@ -366,8 +395,11 @@ class MainWindow(QMainWindow):
                 "Ajuste os filtros ou adicione uma nova tarefa para começar a organizar seu trabalho.",
             ))
         else:
+            sou_admin = self.meu_usuario.get("papel") == "admin"
             for tarefa in tarefas_filtradas:
-                card = TaskCard(tarefa)
+                # Excluir é ação de gestão: admin do grupo, ou dono de tarefa solo.
+                pode_excluir = sou_admin or tarefa.get("grupo_id") is None
+                card = TaskCard(tarefa, pode_excluir=pode_excluir)
                 card.concluir_clicado.connect(self._alternar_conclusao)
                 card.editar_clicado.connect(self._abrir_modal_editar)
                 card.excluir_clicado.connect(self._excluir_tarefa)
@@ -381,8 +413,13 @@ class MainWindow(QMainWindow):
     # ------------------------------------------------------------------
     # CRUD de tarefas
     # ------------------------------------------------------------------
+    def _membros_para_atribuicao(self):
+        if self.meu_usuario.get("papel") != "admin":
+            return None
+        return buscar_membros(self.token)
+
     def abrir_modal_nova_tarefa(self):
-        modal = TaskModal(self)
+        modal = TaskModal(self, membros=self._membros_para_atribuicao())
         if modal.exec_() != TaskModal.Accepted:
             return
 
@@ -390,6 +427,7 @@ class MainWindow(QMainWindow):
         sucesso = criar_tarefa(
             self.token, dados["titulo"], dados["descricao"], dados["prioridade"],
             data_vencimento=dados["data_vencimento"], tags=dados["tags"],
+            atribuido_a_id=dados["atribuido_a_id"],
         )
         if sucesso:
             self.carregar_tarefas()
@@ -403,7 +441,7 @@ class MainWindow(QMainWindow):
         if tarefa is None:
             return
 
-        modal = TaskModal(self, tarefa=tarefa)
+        modal = TaskModal(self, tarefa=tarefa, membros=self._membros_para_atribuicao())
         if modal.exec_() != TaskModal.Accepted:
             return
 
@@ -411,6 +449,7 @@ class MainWindow(QMainWindow):
         resultado = atualizar_tarefa(
             self.token, tarefa_id, dados["titulo"], dados["descricao"], dados["prioridade"],
             data_vencimento=dados["data_vencimento"], tags=dados["tags"],
+            atribuido_a_id=dados["atribuido_a_id"],
         )
         if resultado:
             self.carregar_tarefas()

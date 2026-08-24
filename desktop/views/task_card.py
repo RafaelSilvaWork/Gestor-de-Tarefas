@@ -38,7 +38,7 @@ class TaskCard(QFrame):
     editar_clicado = pyqtSignal(int)
     excluir_clicado = pyqtSignal(int)
 
-    def __init__(self, tarefa, parent=None):
+    def __init__(self, tarefa, parent=None, pode_excluir=True):
         super().__init__(parent)
         self.tarefa_id = tarefa["id"]
         self.setObjectName("TaskCard")
@@ -115,6 +115,11 @@ class TaskCard(QFrame):
                 data_lbl.setStyleSheet("color: #ef4444; text-decoration: underline; background: transparent;")
             linha_meta.addWidget(data_lbl)
 
+        if tarefa.get("grupo_id") and tarefa.get("atribuido_a_username"):
+            responsavel_lbl = QLabel(f"👤 {tarefa['atribuido_a_username']}")
+            responsavel_lbl.setObjectName("TaskDate")
+            linha_meta.addWidget(responsavel_lbl)
+
         linha_meta.addStretch()
         corpo.addLayout(linha_meta)
 
@@ -138,12 +143,17 @@ class TaskCard(QFrame):
         self.btn_editar.setToolTip("Editar tarefa")
         self.btn_editar.clicked.connect(lambda: self.editar_clicado.emit(self.tarefa_id))
 
-        self.btn_excluir = QPushButton("🗑")
-        self.btn_excluir.setObjectName("TaskAction")
-        self.btn_excluir.setToolTip("Excluir tarefa")
-        self.btn_excluir.clicked.connect(lambda: self.excluir_clicado.emit(self.tarefa_id))
+        botoes_acao = [self.btn_editar]
 
-        for b in (self.btn_editar, self.btn_excluir):
+        self.btn_excluir = None
+        if pode_excluir:
+            self.btn_excluir = QPushButton("🗑")
+            self.btn_excluir.setObjectName("TaskAction")
+            self.btn_excluir.setToolTip("Excluir tarefa")
+            self.btn_excluir.clicked.connect(lambda: self.excluir_clicado.emit(self.tarefa_id))
+            botoes_acao.append(self.btn_excluir)
+
+        for b in botoes_acao:
             b.setFixedSize(30, 30)
             b.setCursor(Qt.PointingHandCursor)
             acoes.addWidget(b)
