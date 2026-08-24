@@ -28,12 +28,18 @@ O backend (API) roda embutido no próprio processo do app — não existe mais u
 |---|---|
 | ![Painel com gráfico e indicadores](docs/screenshot_painel.png) | ![Lista de tarefas com filtros](docs/screenshot_tarefas.png) |
 
+| Equipe (visão do administrador) |
+|---|
+| ![Página de equipe com código de convite e membros](docs/screenshot_equipe.png) |
+
 ---
 
 ## ✨ Funcionalidades
 
 - **Autenticação JWT** — registro e login, com senhas armazenadas via hash `bcrypt`.
-- **CRUD completo de tarefas** (criar, editar, concluir/reabrir, excluir) isolado por usuário.
+- **Grupos de trabalho** — crie uma equipe (vira administrador) ou entre em uma existente com um código de convite (vira funcionário). O administrador atribui tarefas aos membros e acompanha todas as tarefas do grupo; cada funcionário só vê e gerencia as que foram atribuídas a ele. Quem não está em nenhum grupo continua no modo solo de sempre.
+- **CRUD completo de tarefas** (criar, editar, concluir/reabrir, excluir) isolado por usuário ou por grupo.
+- **Prazo e tags** por tarefa, com aviso visual quando está atrasada.
 - **Cards de tarefa** com prioridade colorida, status e ações de editar/excluir, em vez de uma tabela genérica.
 - **Modal de criar/editar tarefa**, com filtros por status e prioridade em pills.
 - **Painel analítico** com gráfico de rosca e indicadores (total, concluídas, taxa de conclusão).
@@ -76,7 +82,7 @@ Gestor-de-Tarefas/
 │   ├── app/
 │   │   ├── main.py           # Endpoints e inicialização do FastAPI
 │   │   ├── database.py       # Configuração do SQLAlchemy (engine, Session, Base)
-│   │   ├── models.py         # Modelos ORM (Usuario, Tarefa)
+│   │   ├── models.py         # Modelos ORM (Usuario, Tarefa, Grupo)
 │   │   ├── schemas.py        # Schemas Pydantic (request/response)
 │   │   └── security.py       # Hash de senha, JWT e dependência de autenticação
 │   ├── tests/                # Testes automatizados (pytest)
@@ -139,4 +145,4 @@ pip install -r requirements-dev.txt
 pytest -v
 ```
 
-Os testes usam um banco SQLite em memória (isolado do `tarefas.db` real) e cobrem registro/login, CRUD de tarefas, filtros e isolamento de dados entre usuários.
+Os testes usam um banco SQLite em memória (isolado do `tarefas.db` real) e cobrem registro/login, CRUD de tarefas, filtros, grupos de trabalho (criar/entrar/sair, atribuição, permissões por papel) e migração de um banco em schema antigo.
