@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 
 from PyQt5.QtCore import Qt, QDateTime
+from PyQt5.QtGui import QTextCharFormat, QColor
 from PyQt5.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QTextEdit,
     QComboBox, QPushButton, QFrame, QMessageBox, QCheckBox, QDateTimeEdit,
@@ -77,6 +78,7 @@ class TaskModal(QDialog):
         self.input_prazo.setDisplayFormat("dd/MM/yyyy HH:mm")
         self.input_prazo.setDateTime(QDateTime.currentDateTime().addDays(1))
         self.input_prazo.setEnabled(False)
+        self._estilizar_calendario(self.input_prazo.calendarWidget())
         linha_prazo.addWidget(self.input_prazo, stretch=1)
         layout.addLayout(linha_prazo)
         layout.addSpacing(14)
@@ -122,6 +124,18 @@ class TaskModal(QDialog):
         layout.addLayout(botoes)
 
         self.input_titulo.returnPressed.connect(self._validar_e_aceitar)
+
+    def _estilizar_calendario(self, calendario):
+        # QSS não alcança as cores de fim de semana/cabeçalho do QCalendarWidget
+        # (o Qt aplica vermelho/branco por padrão) — precisa ser feito em código.
+        formato_padrao = QTextCharFormat()
+        formato_padrao.setForeground(QColor("#f1f5f9"))
+        for dia in (Qt.Monday, Qt.Tuesday, Qt.Wednesday, Qt.Thursday, Qt.Friday, Qt.Saturday, Qt.Sunday):
+            calendario.setWeekdayTextFormat(dia, formato_padrao)
+
+        formato_cabecalho = QTextCharFormat()
+        formato_cabecalho.setForeground(QColor("#94a3b8"))
+        calendario.setHeaderTextFormat(formato_cabecalho)
 
     def _label_campo(self, texto):
         lbl = QLabel(texto)
