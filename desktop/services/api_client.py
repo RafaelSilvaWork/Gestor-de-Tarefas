@@ -27,5 +27,24 @@ def criar_tarefa(token, titulo, descricao, prioridade):
     return response.status_code == 200
 
 def atualizar_status_tarefa(token, tarefa_id, novo_status):
-    response = requests.patch(f"{BASE_URL}/tarefas/{tarefa_id}/status?status={novo_status}", headers=get_headers(token))
+    response = requests.patch(
+        f"{BASE_URL}/tarefas/{tarefa_id}/status",
+        params={"status": novo_status},
+        headers=get_headers(token),
+    )
     return response.status_code == 200
+
+
+def atualizar_tarefa(token, tarefa_id, titulo, descricao, prioridade):
+    payload = {
+        "titulo": titulo,
+        "descricao": descricao,
+        "prioridade": prioridade,
+    }
+    response = requests.put(f"{BASE_URL}/tarefas/{tarefa_id}", json=payload, headers=get_headers(token))
+    return response.json() if response.status_code == 200 else None
+
+
+def excluir_tarefa(token, tarefa_id):
+    response = requests.delete(f"{BASE_URL}/tarefas/{tarefa_id}", headers=get_headers(token))
+    return response.status_code == 204

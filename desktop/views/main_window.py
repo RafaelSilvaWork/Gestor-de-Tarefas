@@ -5,20 +5,29 @@ from html import escape
 
 from PyQt5.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
-    QLabel, QLineEdit, QTextEdit, QComboBox, QPushButton, QTableWidget,
-    QTableWidgetItem, QMessageBox, QHeaderView, QStatusBar, QFrame,
+    QLabel, QPushButton, QMessageBox, QStatusBar, QFrame,
     QScrollArea, QStackedWidget, QButtonGroup, QSystemTrayIcon, QMenu,
     QFileDialog
 )
 from PyQt5.QtCore import Qt, QSizeF
-from PyQt5.QtGui import QColor, QBrush, QIcon, QPixmap, QPainter, QFont, QTextDocument
+from PyQt5.QtGui import QColor, QIcon, QPixmap, QPainter, QFont, QTextDocument
 from PyQt5.QtPrintSupport import QPrinter
 
-from services.api_client import buscar_tarefas, criar_tarefa, atualizar_status_tarefa
+from services.api_client import (
+    buscar_tarefas, criar_tarefa, atualizar_status_tarefa,
+    atualizar_tarefa, excluir_tarefa,
+)
 from views.dashboard_widget import DashboardWidget
+from views.task_card import TaskCard
+from views.task_modal import TaskModal
+from views.filter_pill import FilterPill
+from views.empty_state import EmptyState
 
 SIDEBAR_COLLAPSED_WIDTH = 56
 SIDEBAR_EXPANDED_WIDTH = 200
+
+STATUS_PILLS = [("Todos", "Todos"), ("Pendentes", "Pendente"), ("Concluídas", "Concluído")]
+PRIORIDADE_PILLS = [("Todas", "Todas"), ("Baixa", "Baixa"), ("Média", "Média"), ("Alta", "Alta"), ("Urgente", "Urgente")]
 
 
 class MainWindow(QMainWindow):
@@ -26,7 +35,9 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.token = token  # Armazena o token JWT recebido no login
         self.sidebar_expanded = False
-        self.tarefas_atuais = []  # Última lista carregada na tabela (respeitando filtros), usada na exportação
+        self.tarefas_atuais = []  # Última lista carregada (respeitando filtros), usada na exportação e nos cards
+        self.filtro_status_atual = "Todos"
+        self.filtro_prioridade_atual = "Todas"
 
         try:
             DWMWA_USE_IMMERSIVE_DARK_MODE = 20
@@ -38,7 +49,7 @@ class MainWindow(QMainWindow):
             pass
 
         self.setWindowTitle("Gestor de Tarefas")
-        self.resize(980, 780)
+        self.resize(1040, 820)
         self.setMinimumSize(760, 560)
 
         self.app_icon = self._criar_icone_app()
@@ -47,6 +58,7 @@ class MainWindow(QMainWindow):
         self._configurar_tray_icon()
 
         central_widget = QWidget()
+        central_widget.setObjectName("ContentArea")
         self.setCentralWidget(central_widget)
         root_layout = QHBoxLayout(central_widget)
         root_layout.setContentsMargins(0, 0, 0, 0)
@@ -62,12 +74,13 @@ class MainWindow(QMainWindow):
         root_layout.addWidget(scroll_area, stretch=1)
 
         content_widget = QWidget()
+        content_widget.setObjectName("ContentArea")
         scroll_area.setWidget(content_widget)
         content_layout = QVBoxLayout(content_widget)
-        content_layout.setContentsMargins(24, 20, 24, 20)
-        content_layout.setSpacing(16)
+        content_layout.setContentsMargins(32, 28, 32, 28)
+        content_layout.setSpacing(20)
 
-        self.page_titles = {0: ("Painel", "Visão geral das suas tarefas"), 1: ("Tarefas", "Cadastre e gerencie suas entregas")}
+        self.page_titles = {0: ("Painel", "Visão geral das suas tarefas"), 1: ("Minhas Tarefas", "Cadastre e gerencie suas entregas")}
 
         header_layout = QHBoxLayout()
         header_text = QVBoxLayout()
@@ -80,6 +93,13 @@ class MainWindow(QMainWindow):
         header_text.addWidget(self.page_subtitle_label)
         header_layout.addLayout(header_text)
         header_layout.addStretch()
+
+        self.btn_adicionar = QPushButton("+  Adicionar Tarefa")
+        self.btn_adicionar.setObjectName("AddButton")
+        self.btn_adicionar.setCursor(Qt.PointingHandCursor)
+        self.btn_adicionar.clicked.connect(self.abrir_modal_nova_tarefa)
+        header_layout.addWidget(self.btn_adicionar)
+
         content_layout.addLayout(header_layout)
 
         self.stack = QStackedWidget()
@@ -93,7 +113,7 @@ class MainWindow(QMainWindow):
         self.setStatusBar(self.status_bar)
 
         self.mudar_pagina(0)
-        self.carregar_tabela()
+        self.carregar_tarefas()
 
     # ------------------------------------------------------------------
     # Bandeja do sistema
@@ -104,7 +124,7 @@ class MainWindow(QMainWindow):
 
         painter = QPainter(pixmap)
         painter.setRenderHint(QPainter.Antialiasing)
-        painter.setBrush(QColor("#5468ff"))
+        painter.setBrush(QColor("#6366f1"))
         painter.setPen(Qt.NoPen)
         painter.drawRoundedRect(4, 4, 56, 56, 14, 14)
 
@@ -215,97 +235,39 @@ class MainWindow(QMainWindow):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(16)
 
-        # --- Seção de Cadastro ---
-        form_card = QFrame()
-        form_card.setObjectName("Card")
-        form_layout = QVBoxLayout(form_card)
-        form_layout.setContentsMargins(18, 16, 18, 16)
-        form_layout.setSpacing(6)
+        # --- Filtros pill ---
+        filtros_status_layout = QHBoxLayout()
+        filtros_status_layout.setSpacing(8)
+        self.grupo_status = QButtonGroup(self)
+        self.grupo_status.setExclusive(True)
+        for i, (rotulo, valor) in enumerate(STATUS_PILLS):
+            pill = FilterPill(rotulo, valor=valor, ativo=(valor == self.filtro_status_atual))
+            pill.clicked.connect(lambda _checked, v=valor: self._filtrar_status(v))
+            self.grupo_status.addButton(pill, i)
+            filtros_status_layout.addWidget(pill)
+        filtros_status_layout.addStretch()
+        layout.addLayout(filtros_status_layout)
 
-        form_title = QLabel("NOVA TAREFA")
-        form_title.setObjectName("SectionTitle")
-        form_layout.addWidget(form_title)
-        form_layout.addSpacing(4)
+        filtros_prio_layout = QHBoxLayout()
+        filtros_prio_layout.setSpacing(8)
+        self.grupo_prioridade = QButtonGroup(self)
+        self.grupo_prioridade.setExclusive(True)
+        for i, (rotulo, valor) in enumerate(PRIORIDADE_PILLS):
+            pill = FilterPill(rotulo, valor=valor, ativo=(valor == self.filtro_prioridade_atual))
+            pill.clicked.connect(lambda _checked, v=valor: self._filtrar_prioridade(v))
+            self.grupo_prioridade.addButton(pill, i)
+            filtros_prio_layout.addWidget(pill)
+        filtros_prio_layout.addStretch()
+        layout.addLayout(filtros_prio_layout)
 
-        lbl_titulo = QLabel("TÍTULO")
-        lbl_titulo.setObjectName("FieldLabel")
-        form_layout.addWidget(lbl_titulo)
-        self.input_titulo = QLineEdit()
-        self.input_titulo.setPlaceholderText("Ex: Otimizar rotina de automação...")
-        self.input_titulo.returnPressed.connect(self.adicionar_tarefa)
-        form_layout.addWidget(self.input_titulo)
+        # --- Lista de tarefas (cards) ---
+        self.lista_container = QVBoxLayout()
+        self.lista_container.setSpacing(14)
+        layout.addLayout(self.lista_container)
+        layout.addStretch()
 
-        lbl_desc = QLabel("DESCRIÇÃO")
-        lbl_desc.setObjectName("FieldLabel")
-        form_layout.addWidget(lbl_desc)
-        self.input_descricao = QTextEdit()
-        self.input_descricao.setPlaceholderText("Detalhes opcionais sobre a tarefa...")
-        self.input_descricao.setMaximumHeight(60)
-        form_layout.addWidget(self.input_descricao)
-
-        lbl_prio = QLabel("PRIORIDADE")
-        lbl_prio.setObjectName("FieldLabel")
-        form_layout.addWidget(lbl_prio)
-        self.combo_prioridade = QComboBox()
-        self.combo_prioridade.addItems(["Baixa", "Média", "Alta"])
-        form_layout.addWidget(self.combo_prioridade)
-
-        form_layout.addSpacing(4)
-        self.btn_salvar = QPushButton("ADICIONAR TAREFA")
-        self.btn_salvar.setObjectName("BtnSalvar")
-        self.btn_salvar.setCursor(Qt.PointingHandCursor)
-        self.btn_salvar.clicked.connect(self.adicionar_tarefa)
-        form_layout.addWidget(self.btn_salvar)
-
-        layout.addWidget(form_card)
-
-        # --- Seção de Listagem ---
-        list_card = QFrame()
-        list_card.setObjectName("Card")
-        list_layout = QVBoxLayout(list_card)
-        list_layout.setContentsMargins(18, 16, 18, 12)
-        list_layout.setSpacing(10)
-
-        list_header = QHBoxLayout()
-        list_title = QLabel("TAREFAS")
-        list_title.setObjectName("SectionTitle")
-        list_header.addWidget(list_title)
-        list_header.addStretch()
-
-        list_header.addWidget(QLabel("Status:"))
-        self.filtro_status = QComboBox()
-        self.filtro_status.addItems(["Todos", "Pendente", "Concluído"])
-        self.filtro_status.currentIndexChanged.connect(self.carregar_tabela)
-        self.filtro_status.setFixedWidth(140)
-        list_header.addWidget(self.filtro_status)
-
-        list_header.addWidget(QLabel("Prioridade:"))
-        self.filtro_prio = QComboBox()
-        self.filtro_prio.addItems(["Todas", "Baixa", "Média", "Alta"])
-        self.filtro_prio.currentIndexChanged.connect(self.carregar_tabela)
-        self.filtro_prio.setFixedWidth(120)
-        list_header.addWidget(self.filtro_prio)
-
-        list_layout.addLayout(list_header)
-
-        self.tabela = QTableWidget()
-        self.tabela.setColumnCount(5)
-        self.tabela.setHorizontalHeaderLabels(["ID", "Título", "Descrição", "Prioridade", "Status"])
-        self.tabela.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
-        self.tabela.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeToContents)
-        self.tabela.verticalHeader().setVisible(False)
-        self.tabela.verticalHeader().setDefaultSectionSize(38)
-        self.tabela.setSelectionBehavior(QTableWidget.SelectRows)
-        self.tabela.setEditTriggers(QTableWidget.NoEditTriggers)
-        self.tabela.setCornerButtonEnabled(False)
-        self.tabela.setShowGrid(False)
-        self.tabela.setAlternatingRowColors(True)
-        self.tabela.setMinimumHeight(260)
-        list_layout.addWidget(self.tabela)
-
-        # --- Botões de Ação ---
+        # --- Ações inferiores (exportação) ---
         actions_layout = QHBoxLayout()
-
         self.btn_exportar_csv = QPushButton("EXPORTAR CSV")
         self.btn_exportar_csv.setObjectName("BtnSecondary")
         self.btn_exportar_csv.setCursor(Qt.PointingHandCursor)
@@ -320,20 +282,12 @@ class MainWindow(QMainWindow):
         actions_layout.addWidget(self.btn_exportar_pdf)
         actions_layout.addStretch()
 
-        self.btn_atualizar = QPushButton("ATUALIZAR LISTA")
+        self.btn_atualizar = QPushButton("ATUALIZAR")
         self.btn_atualizar.setCursor(Qt.PointingHandCursor)
-        self.btn_atualizar.clicked.connect(self.carregar_tabela)
-
-        self.btn_concluir = QPushButton("MARCAR COMO CONCLUÍDO")
-        self.btn_concluir.setObjectName("BtnConcluir")
-        self.btn_concluir.setCursor(Qt.PointingHandCursor)
-        self.btn_concluir.clicked.connect(lambda: self.mudar_status("Concluído"))
-
+        self.btn_atualizar.clicked.connect(self.carregar_tarefas)
         actions_layout.addWidget(self.btn_atualizar)
-        actions_layout.addWidget(self.btn_concluir)
-        list_layout.addLayout(actions_layout)
 
-        layout.addWidget(list_card, stretch=1)
+        layout.addLayout(actions_layout)
         return page
 
     # ------------------------------------------------------------------
@@ -351,7 +305,6 @@ class MainWindow(QMainWindow):
             self.btn_nav_painel.setText("📊")
             self.btn_nav_tarefas.setText("✅")
 
-        alignment = "left" if self.sidebar_expanded else "center"
         for btn in (self.btn_nav_painel, self.btn_nav_tarefas):
             btn.setProperty("expanded", self.sidebar_expanded)
             btn.style().unpolish(btn)
@@ -363,94 +316,136 @@ class MainWindow(QMainWindow):
         titulo, subtitulo = self.page_titles[index]
         self.page_title_label.setText(titulo)
         self.page_subtitle_label.setText(subtitulo)
+        self.btn_adicionar.setVisible(index == 1)
         if index == 0:
-            self.carregar_tabela()
+            self.carregar_tarefas()
 
     # ------------------------------------------------------------------
-    # Dados
+    # Filtros
     # ------------------------------------------------------------------
-    def carregar_tabela(self):
-        status_sel = self.filtro_status.currentText()
-        prio_sel = self.filtro_prio.currentText()
+    def _filtrar_status(self, valor):
+        self.filtro_status_atual = valor
+        self.carregar_tarefas()
 
-        # Busca todas as tarefas do usuário para o gráfico geral e aplica os filtros visuais na tabela
+    def _filtrar_prioridade(self, valor):
+        self.filtro_prioridade_atual = valor
+        self.carregar_tarefas()
+
+    # ------------------------------------------------------------------
+    # Dados / lista de cards
+    # ------------------------------------------------------------------
+    def _limpar_lista(self):
+        while self.lista_container.count():
+            item = self.lista_container.takeAt(0)
+            widget = item.widget()
+            if widget:
+                widget.setParent(None)
+                widget.deleteLater()
+
+    def carregar_tarefas(self):
+        # Busca todas as tarefas do usuário para o painel e aplica os filtros para a lista
         tarefas_gerais = buscar_tarefas(self.token)
         if tarefas_gerais is None:
-            self.status_bar.showMessage("Erro: Falha na comunicação com a API do FastAPI.", 5000)
+            self.status_bar.showMessage("Erro: Falha na comunicação com a API.", 5000)
             return
 
-        # Atualiza o dashboard com base em todas as tarefas do usuário
         self.dashboard.atualizar_dados(tarefas_gerais)
 
-        # Filtra localmente ou busca filtrado para a tabela
-        tarefas_filtradas = buscar_tarefas(self.token, status=status_sel, prioridade=prio_sel)
+        tarefas_filtradas = buscar_tarefas(
+            self.token,
+            status=self.filtro_status_atual,
+            prioridade=self.filtro_prioridade_atual,
+        )
         self.tarefas_atuais = tarefas_filtradas
 
-        self.tabela.setRowCount(len(tarefas_filtradas))
+        self._limpar_lista()
 
-        for row, tarefa in enumerate(tarefas_filtradas):
-            item_id = QTableWidgetItem(str(tarefa.get("id")))
-            item_titulo = QTableWidgetItem(tarefa.get("titulo"))
-            item_desc = QTableWidgetItem(tarefa.get("descricao") or "")
-            item_prio = QTableWidgetItem(tarefa.get("prioridade"))
-
-            status_texto = tarefa.get("status")
-
-            if status_texto == "Concluído":
-                item_status = QTableWidgetItem(f"●  {status_texto}")
-                item_status.setForeground(QBrush(QColor("#3ddc84")))
-            else:
-                item_status = QTableWidgetItem(f"●  {status_texto}")
-                item_status.setForeground(QBrush(QColor("#f2a93c")))
-
-            item_status.setTextAlignment(Qt.AlignCenter)
-            item_id.setTextAlignment(Qt.AlignCenter)
-            item_prio.setTextAlignment(Qt.AlignCenter)
-
-            self.tabela.setItem(row, 0, item_id)
-            self.tabela.setItem(row, 1, item_titulo)
-            self.tabela.setItem(row, 2, item_desc)
-            self.tabela.setItem(row, 3, item_prio)
-            self.tabela.setItem(row, 4, item_status)
+        if not tarefas_filtradas:
+            self.lista_container.addWidget(EmptyState(
+                "Nenhuma tarefa por aqui",
+                "Ajuste os filtros ou adicione uma nova tarefa para começar a organizar seu trabalho.",
+            ))
+        else:
+            for tarefa in tarefas_filtradas:
+                card = TaskCard(tarefa)
+                card.concluir_clicado.connect(self._alternar_conclusao)
+                card.editar_clicado.connect(self._abrir_modal_editar)
+                card.excluir_clicado.connect(self._excluir_tarefa)
+                self.lista_container.addWidget(card)
 
         self.status_bar.showMessage(f"Exibindo {len(tarefas_filtradas)} tarefa(s).", 4000)
 
-    def adicionar_tarefa(self):
-        titulo = self.input_titulo.text().strip()
-        descricao = self.input_descricao.toPlainText().strip()
-        prioridade = self.combo_prioridade.currentText()
+    def _tarefa_por_id(self, tarefa_id):
+        return next((t for t in self.tarefas_atuais if t.get("id") == tarefa_id), None)
 
-        if not titulo:
-            QMessageBox.warning(self, "Aviso", "O título da tarefa não pode estar vazio!")
+    # ------------------------------------------------------------------
+    # CRUD de tarefas
+    # ------------------------------------------------------------------
+    def abrir_modal_nova_tarefa(self):
+        modal = TaskModal(self)
+        if modal.exec_() != TaskModal.Accepted:
             return
 
-        sucesso = criar_tarefa(self.token, titulo, descricao, prioridade)
+        dados = modal.dados()
+        sucesso = criar_tarefa(self.token, dados["titulo"], dados["descricao"], dados["prioridade"])
         if sucesso:
-            self.input_titulo.clear()
-            self.input_descricao.clear()
-            self.carregar_tabela()
+            self.carregar_tarefas()
             self.status_bar.showMessage("Tarefa adicionada com sucesso!", 4000)
-            self.notificar("Tarefa criada", f'"{titulo}" foi adicionada com sucesso.')
+            self.notificar("Tarefa criada", f'"{dados["titulo"]}" foi adicionada com sucesso.')
         else:
             QMessageBox.critical(self, "Erro", "Não foi possível conectar à API para salvar a tarefa.")
 
-    def mudar_status(self, novo_status):
-        selected_row = self.tabela.currentRow()
-        if selected_row < 0:
-            QMessageBox.warning(self, "Aviso", "Selecione uma tarefa na tabela primeiro!")
+    def _abrir_modal_editar(self, tarefa_id):
+        tarefa = self._tarefa_por_id(tarefa_id)
+        if tarefa is None:
             return
 
-        tarefa_id = int(self.tabela.item(selected_row, 0).text())
-        titulo_tarefa = self.tabela.item(selected_row, 1).text()
+        modal = TaskModal(self, tarefa=tarefa)
+        if modal.exec_() != TaskModal.Accepted:
+            return
+
+        dados = modal.dados()
+        resultado = atualizar_tarefa(self.token, tarefa_id, dados["titulo"], dados["descricao"], dados["prioridade"])
+        if resultado:
+            self.carregar_tarefas()
+            self.status_bar.showMessage("Tarefa atualizada com sucesso!", 4000)
+        else:
+            QMessageBox.critical(self, "Erro", "Não foi possível salvar as alterações na API.")
+
+    def _alternar_conclusao(self, tarefa_id):
+        tarefa = self._tarefa_por_id(tarefa_id)
+        if tarefa is None:
+            return
+
+        novo_status = "Pendente" if tarefa.get("status") == "Concluído" else "Concluído"
         sucesso = atualizar_status_tarefa(self.token, tarefa_id, novo_status)
 
         if sucesso:
-            self.carregar_tabela()
-            self.status_bar.showMessage(f"Tarefa #{tarefa_id} atualizada para '{novo_status}'.", 4000)
+            self.carregar_tarefas()
+            self.status_bar.showMessage(f"Tarefa atualizada para '{novo_status}'.", 4000)
             if novo_status == "Concluído":
-                self.notificar("Tarefa concluída", f'"{titulo_tarefa}" foi marcada como concluída.')
+                self.notificar("Tarefa concluída", f'"{tarefa.get("titulo")}" foi marcada como concluída.')
         else:
             QMessageBox.critical(self, "Erro", "Falha ao atualizar o status na API.")
+
+    def _excluir_tarefa(self, tarefa_id):
+        tarefa = self._tarefa_por_id(tarefa_id)
+        titulo = tarefa.get("titulo") if tarefa else ""
+
+        resposta = QMessageBox.question(
+            self, "Excluir tarefa",
+            f'Tem certeza que deseja excluir "{titulo}"? Essa ação não pode ser desfeita.',
+            QMessageBox.Yes | QMessageBox.No, QMessageBox.No,
+        )
+        if resposta != QMessageBox.Yes:
+            return
+
+        sucesso = excluir_tarefa(self.token, tarefa_id)
+        if sucesso:
+            self.carregar_tarefas()
+            self.status_bar.showMessage("Tarefa excluída.", 4000)
+        else:
+            QMessageBox.critical(self, "Erro", "Não foi possível excluir a tarefa na API.")
 
     # ------------------------------------------------------------------
     # Exportação de relatórios
@@ -533,7 +528,7 @@ class MainWindow(QMainWindow):
         <html>
         <head><meta charset="utf-8"></head>
         <body style="font-family:'Segoe UI', sans-serif; color:#1a1d25;">
-            <h1 style="color:#5468ff; margin-bottom:2px;">Gestor de Tarefas</h1>
+            <h1 style="color:#6366f1; margin-bottom:2px;">Gestor de Tarefas</h1>
             <p style="color:#666666; margin-top:0;">Relatório de Tarefas &mdash; gerado em {gerado_em}</p>
             <hr style="border:none; border-top:1px solid #dddddd;">
 
@@ -559,7 +554,7 @@ class MainWindow(QMainWindow):
             </table>
 
             <table width="100%" cellspacing="0" cellpadding="6" border="1" style="border-collapse:collapse; border-color:#dddddd;">
-                <tr style="background:#5468ff; color:#ffffff;">
+                <tr style="background:#6366f1; color:#ffffff;">
                     <th align="left">ID</th>
                     <th align="left">Título</th>
                     <th align="left">Descrição</th>

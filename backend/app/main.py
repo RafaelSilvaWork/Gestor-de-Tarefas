@@ -76,6 +76,47 @@ def criar_tarefa(
     db.refresh(nova_tarefa)
     return nova_tarefa
 
+# --- ROTA DE EDIÇÃO DE TAREFA (título, descrição, prioridade) ---
+@app.put("/tarefas/{tarefa_id}", response_model=schemas.TarefaResponse)
+def editar_tarefa(
+    tarefa_id: int,
+    dados: schemas.TarefaUpdate,
+    db: Session = Depends(get_db),
+    current_user: models.Usuario = Depends(get_current_user)
+):
+    tarefa = db.query(models.Tarefa).filter(
+        models.Tarefa.id == tarefa_id,
+        models.Tarefa.usuario_id == current_user.id
+    ).first()
+
+    if not tarefa:
+        raise HTTPException(status_code=404, detail="Tarefa não encontrada")
+
+    tarefa.titulo = dados.titulo
+    tarefa.descricao = dados.descricao
+    tarefa.prioridade = dados.prioridade
+    db.commit()
+    db.refresh(tarefa)
+    return tarefa
+
+# --- ROTA DE EXCLUSÃO DE TAREFA ---
+@app.delete("/tarefas/{tarefa_id}", status_code=status.HTTP_204_NO_CONTENT)
+def excluir_tarefa(
+    tarefa_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.Usuario = Depends(get_current_user)
+):
+    tarefa = db.query(models.Tarefa).filter(
+        models.Tarefa.id == tarefa_id,
+        models.Tarefa.usuario_id == current_user.id
+    ).first()
+
+    if not tarefa:
+        raise HTTPException(status_code=404, detail="Tarefa não encontrada")
+
+    db.delete(tarefa)
+    db.commit()
+
 # --- ROTA DE ATUALIZAÇÃO DE STATUS ---
 @app.patch("/tarefas/{tarefa_id}/status", response_model=schemas.TarefaResponse)
 def atualizar_status_tarefa(

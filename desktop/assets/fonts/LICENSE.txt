@@ -1,0 +1,9 @@
+Fontes embutidas neste app, todas licenciadas sob a SIL Open Font License 1.1
+(uso livre, inclusive comercial, com atribuição mantida no próprio arquivo):
+
+- Poppins (Indian Type Foundry) — Poppins-Bold.ttf, Poppins-SemiBold.ttf, Poppins-Regular.ttf
+- Inter (Rasmus Andersson) — Inter-Variable.ttf
+- JetBrains Mono (JetBrains s.r.o.) — JetBrainsMono-Variable.ttf
+
+Baixadas de https://github.com/google/fonts (diretório ofl/).
+Texto completo da licença: https://openfontlicense.org

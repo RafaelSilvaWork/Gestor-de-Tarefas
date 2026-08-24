@@ -3,11 +3,7 @@ from PyQt5.QtChart import QChart, QChartView, QPieSeries
 from PyQt5.QtCore import Qt, QMargins
 from PyQt5.QtGui import QPainter, QColor, QFont
 
-COLOR_SUCCESS = "#3ddc84"
-COLOR_WARNING = "#f2a93c"
-COLOR_TEXT = "#e8eaed"
-COLOR_MUTED = "#7d8494"
-COLOR_SURFACE = "#171a21"
+from services.theme import COMPLETA as COLOR_SUCCESS, LARANJA as COLOR_WARNING, TEXT_PRIMARY as COLOR_TEXT, TEXT_MUTED as COLOR_MUTED, CARD_BG_A as COLOR_SURFACE
 
 CARD_HEIGHT = 74
 
@@ -44,7 +40,10 @@ class DashboardWidget(QWidget):
         card_layout.setSpacing(2)
 
         lbl_valor = QLabel(str(valor))
-        lbl_valor.setStyleSheet(f"color: {cor_valor}; font-size: 22px; font-weight: 700; background: transparent;")
+        lbl_valor.setStyleSheet(
+            f"color: {cor_valor}; font-family: 'Poppins', 'Segoe UI', sans-serif;"
+            f"font-size: 24px; font-weight: 700; background: transparent;"
+        )
 
         lbl_rotulo = QLabel(rotulo)
         lbl_rotulo.setStyleSheet(f"color: {COLOR_MUTED}; font-size: 11px; font-weight: 600; letter-spacing: 0.5px; background: transparent;")
@@ -92,7 +91,7 @@ class DashboardWidget(QWidget):
         chart.legend().setVisible(True)
         chart.legend().setAlignment(Qt.AlignBottom)
         chart.legend().setLabelColor(QColor(COLOR_MUTED))
-        chart.legend().setFont(QFont("Segoe UI", 9))
+        chart.legend().setFont(QFont("Inter", 9))
         chart.setBackgroundBrush(QColor(COLOR_SURFACE))
         chart.setBackgroundRoundness(0)
         chart.setMargins(QMargins(0, 0, 0, 0))

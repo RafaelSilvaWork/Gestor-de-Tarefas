@@ -14,10 +14,13 @@ env/
 # Variáveis de ambiente / segredos
 .env
 
-# Banco de dados local
+# Banco de dados local (backend/ em produção; desktop/ ao rodar o app
+# unificado a partir do código-fonte, que também gera .db/.env locais)
 backend/*.db
 backend/*.db-journal
 backend/*.db.*
+desktop/*.db
+desktop/*.db-journal
 
 # Build / distribuição
 build/

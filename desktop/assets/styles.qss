@@ -1,52 +1,60 @@
 /* ==========================================================================
-   GESTOR DE TAREFAS — TEMA PROFISSIONAL (DARK)
-   Paleta: superfícies em tons de grafite/slate, acento índigo, texto neutro.
+   GESTOR DE TAREFAS — DESIGN SYSTEM PREMIUM
+   Índigo/magenta/teal sobre deep navy. Inspirado em Linear/Superhuman/Slack.
+   Fontes: Poppins (títulos), Inter (corpo), JetBrains Mono (badges/tags).
    ========================================================================== */
 
 * {
-    font-family: 'Segoe UI', -apple-system, sans-serif;
+    font-family: 'Inter', 'Segoe UI', sans-serif;
     outline: none;
 }
 
 QMainWindow, QDialog {
-    background-color: #0f1115;
-    color: #e8eaed;
+    background-color: #0f172a;
+    color: #f1f5f9;
     font-size: 13px;
 }
 
 QWidget {
     background-color: transparent;
-    color: #e8eaed;
+    color: #f1f5f9;
     font-size: 13px;
 }
 
+/* QWidget puro com fundo "transparent" não herda automaticamente a cor do
+   QMainWindow — em áreas não cobertas por nenhum card, isso deixava o
+   branco padrão do SO vazar. ContentArea garante fundo escuro sempre. */
+#ContentArea {
+    background-color: #0f172a;
+}
+
 QToolTip {
-    background-color: #1d212b;
-    color: #e8eaed;
-    border: 1px solid #2a2f3d;
+    background-color: #1e293b;
+    color: #f1f5f9;
+    border: 1px solid #334155;
     padding: 4px 8px;
     border-radius: 4px;
 }
 
 /* --- BARRA LATERAL --- */
 #Sidebar {
-    background-color: #14161c;
+    background-color: #0f172a;
     border: none;
-    border-right: 1px solid #1d212b;
+    border-right: 1px solid rgba(99, 102, 241, 0.15);
 }
 
 #BtnToggleMenu {
     background: transparent;
     border: none;
-    color: #c3c8d4;
+    color: #cbd5e1;
     font-size: 16px;
     padding: 8px;
     min-height: 18px;
-    border-radius: 6px;
+    border-radius: 8px;
 }
 
 #BtnToggleMenu:hover {
-    background-color: #1f2330;
+    background-color: rgba(99, 102, 241, 0.15);
     border: none;
     color: #ffffff;
 }
@@ -54,22 +62,23 @@ QToolTip {
 QPushButton#NavButton {
     background: transparent;
     border: none;
-    border-radius: 6px;
+    border-radius: 10px;
     padding: 10px 8px;
     min-height: 18px;
     font-size: 15px;
-    color: #7d8494;
+    color: #94a3b8;
     text-align: center;
 }
 
 QPushButton#NavButton:hover {
-    background-color: #1f2330;
-    color: #e8eaed;
+    background-color: rgba(99, 102, 241, 0.12);
+    color: #f1f5f9;
 }
 
 QPushButton#NavButton:checked {
-    background-color: rgba(84, 104, 255, 0.14);
-    color: #9aa4ff;
+    background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 rgba(99, 102, 241, 0.35), stop:1 rgba(124, 58, 237, 0.25));
+    color: #ffffff;
+    border-left: 3px solid #ec4899;
 }
 
 QPushButton#NavButton[expanded="true"] {
@@ -79,9 +88,9 @@ QPushButton#NavButton[expanded="true"] {
 
 /* --- CARTÕES / PAINÉIS --- */
 #Card, #AuthCard, #MetricCard {
-    background-color: #171a21;
-    border: 1px solid #232733;
-    border-radius: 10px;
+    background-color: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #1a2847, stop:1 #1e293b);
+    border: 1px solid rgba(99, 102, 241, 0.2);
+    border-radius: 14px;
 }
 
 #Card {
@@ -90,31 +99,31 @@ QPushButton#NavButton[expanded="true"] {
 
 /* --- TÍTULOS --- */
 #AppTitle {
-    color: #f4f5f7;
-    font-size: 21px;
+    color: #f1f5f9;
+    font-family: 'Poppins', 'Segoe UI', sans-serif;
+    font-size: 30px;
     font-weight: 700;
-    letter-spacing: 0.2px;
     background: transparent;
 }
 
 #AppSubtitle {
-    color: #7d8494;
-    font-size: 12px;
+    color: #94a3b8;
+    font-size: 13px;
     font-weight: 400;
     background: transparent;
 }
 
 #SectionTitle {
-    color: #e8eaed;
-    font-size: 13px;
-    font-weight: 700;
-    letter-spacing: 0.6px;
+    color: #f1f5f9;
+    font-family: 'Poppins', 'Segoe UI', sans-serif;
+    font-size: 18px;
+    font-weight: 600;
     background: transparent;
     padding-bottom: 2px;
 }
 
 #FieldLabel {
-    color: #7d8494;
+    color: #94a3b8;
     font-size: 11px;
     font-weight: 600;
     letter-spacing: 0.8px;
@@ -123,40 +132,40 @@ QPushButton#NavButton[expanded="true"] {
 
 /* --- RÓTULOS PADRÃO --- */
 QLabel {
-    color: #c3c8d4;
+    color: #cbd5e1;
     background: transparent;
 }
 
 /* --- CAMPOS DE ENTRADA (INPUTS) --- */
 QLineEdit, QTextEdit, QComboBox {
-    background-color: #1d212b;
-    color: #e8eaed;
-    border: 1px solid #2a2f3d;
-    border-radius: 6px;
-    padding: 8px 10px;
+    background-color: rgba(15, 23, 42, 0.5);
+    color: #f1f5f9;
+    border: 1px solid rgba(99, 102, 241, 0.3);
+    border-radius: 10px;
+    padding: 10px 14px;
     min-height: 20px;
-    selection-background-color: #5468ff;
+    selection-background-color: #6366f1;
     selection-color: #ffffff;
 }
 
 QLineEdit::placeholder, QTextEdit::placeholder {
-    color: #5c6270;
+    color: rgba(203, 213, 225, 0.45);
 }
 
 QLineEdit:hover, QTextEdit:hover, QComboBox:hover {
-    border: 1px solid #3a4152;
+    border: 1px solid rgba(99, 102, 241, 0.5);
 }
 
 QLineEdit:focus, QTextEdit:focus, QComboBox:focus {
-    border: 1px solid #5468ff;
-    background-color: #20242f;
+    border: 1px solid #6366f1;
+    background-color: rgba(15, 23, 42, 0.8);
 }
 
 QComboBox::drop-down {
     subcontrol-origin: padding;
     subcontrol-position: top right;
-    width: 26px;
-    border-left: 1px solid #2a2f3d;
+    width: 30px;
+    border-left: 1px solid rgba(99, 102, 241, 0.3);
 }
 
 QComboBox::down-arrow {
@@ -165,10 +174,10 @@ QComboBox::down-arrow {
 }
 
 QComboBox QAbstractItemView {
-    background-color: #1d212b;
-    color: #e8eaed;
-    border: 1px solid #2a2f3d;
-    selection-background-color: #5468ff;
+    background-color: #1e293b;
+    color: #f1f5f9;
+    border: 1px solid rgba(99, 102, 241, 0.3);
+    selection-background-color: #6366f1;
     selection-color: #ffffff;
     outline: none;
     padding: 4px;
@@ -176,106 +185,278 @@ QComboBox QAbstractItemView {
 
 /* --- BOTÕES PADRÃO (SECUNDÁRIOS) --- */
 QPushButton {
-    background-color: #1d212b;
-    color: #c3c8d4;
-    border: 1px solid #2a2f3d;
-    border-radius: 6px;
+    background-color: rgba(99, 102, 241, 0.12);
+    color: #cbd5e1;
+    border: 1px solid rgba(99, 102, 241, 0.25);
+    border-radius: 10px;
     padding: 9px 16px;
     min-height: 18px;
     font-weight: 600;
-    letter-spacing: 0.3px;
 }
 
 QPushButton:hover {
-    background-color: #262b38;
-    border: 1px solid #3a4152;
+    background-color: rgba(99, 102, 241, 0.2);
+    border: 1px solid rgba(99, 102, 241, 0.45);
     color: #ffffff;
 }
 
 QPushButton:pressed {
-    background-color: #14171e;
+    background-color: rgba(99, 102, 241, 0.3);
 }
 
-/* --- BOTÃO PRIMÁRIO (AÇÃO PRINCIPAL) --- */
-#BtnSalvar, #BtnPrimary {
-    background-color: #5468ff;
+/* --- BOTÃO PRIMÁRIO / CTA (gradiente índigo → magenta) --- */
+#BtnSalvar, #BtnPrimary, #AddButton {
+    font-family: 'Poppins', 'Segoe UI', sans-serif;
+    background-color: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #6366f1, stop:1 #ec4899);
     color: #ffffff;
-    border: 1px solid #5468ff;
-    font-size: 13px;
-    font-weight: 700;
+    border: none;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 12px 24px;
+    border-radius: 12px;
 }
 
-#BtnSalvar:hover, #BtnPrimary:hover {
-    background-color: #6577ff;
-    border: 1px solid #6577ff;
+#BtnSalvar:hover, #BtnPrimary:hover, #AddButton:hover {
+    background-color: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #7c7fff, stop:1 #ff6bb0);
 }
 
-#BtnSalvar:pressed, #BtnPrimary:pressed {
-    background-color: #4457e6;
-    border: 1px solid #4457e6;
+#BtnSalvar:pressed, #BtnPrimary:pressed, #AddButton:pressed {
+    background-color: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #5254d1, stop:1 #d13d7c);
 }
 
-/* --- BOTÃO SECUNDÁRIO EXPLÍCITO (ex: criar conta) --- */
-#BtnSecondary {
-    background-color: transparent;
-    color: #9aa4ff;
-    border: 1px solid #3a4152;
+/* --- BOTÃO SECUNDÁRIO EXPLÍCITO (ex: criar conta, cancelar) --- */
+#BtnSecondary, #ModalBtnSecondary {
+    background-color: rgba(99, 102, 241, 0.1);
+    color: #cbd5e1;
+    border: 1px solid rgba(99, 102, 241, 0.3);
+    border-radius: 10px;
+    padding: 10px 20px;
+    font-weight: 600;
 }
 
-#BtnSecondary:hover {
-    background-color: rgba(84, 104, 255, 0.10);
-    border: 1px solid #5468ff;
+#BtnSecondary:hover, #ModalBtnSecondary:hover {
+    background-color: rgba(99, 102, 241, 0.2);
+    border: 1px solid #6366f1;
     color: #ffffff;
 }
 
 /* --- BOTÃO DE CONCLUIR --- */
 #BtnConcluir {
-    background-color: rgba(47, 191, 113, 0.12);
-    color: #3ddc84;
-    border: 1px solid rgba(61, 220, 132, 0.35);
+    background-color: rgba(16, 185, 129, 0.15);
+    color: #10b981;
+    border: 1px solid rgba(16, 185, 129, 0.4);
 }
 
 #BtnConcluir:hover {
-    background-color: #2fbf71;
-    color: #0f1115;
-    border: 1px solid #2fbf71;
+    background-color: #10b981;
+    color: #0f172a;
+    border: 1px solid #10b981;
 }
 
-/* --- TABELA DE DADOS --- */
+/* --- FILTROS PILL --- */
+QPushButton#FilterPill {
+    font-size: 13px;
+    font-weight: 600;
+    padding: 8px 18px;
+    border-radius: 18px;
+    background-color: rgba(99, 102, 241, 0.12);
+    border: 1px solid rgba(99, 102, 241, 0.3);
+    color: #cbd5e1;
+    min-height: 16px;
+}
+
+QPushButton#FilterPill:hover {
+    background-color: rgba(99, 102, 241, 0.22);
+    border: 1px solid rgba(99, 102, 241, 0.5);
+}
+
+QPushButton#FilterPill:checked {
+    background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #6366f1, stop:1 #7c3aed);
+    border: 1px solid transparent;
+    color: #ffffff;
+}
+
+/* --- CARD DE TAREFA --- */
+#TaskCard {
+    background-color: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #1a2847, stop:1 #1e293b);
+    border: 1px solid rgba(99, 102, 241, 0.2);
+    border-radius: 14px;
+}
+
+#TaskCard[hover="true"] {
+    border: 1px solid rgba(236, 72, 153, 0.5);
+}
+
+#TaskCheckbox {
+    border: 2px solid rgba(99, 102, 241, 0.5);
+    border-radius: 6px;
+    background: transparent;
+    padding: 0;
+    min-height: 0;
+}
+
+#TaskCheckbox:hover {
+    border: 2px solid #6366f1;
+}
+
+#TaskCheckbox:checked {
+    background-color: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #14b8a6, stop:1 #10b981);
+    border: 2px solid transparent;
+}
+
+#TaskTitle {
+    font-family: 'Poppins', 'Segoe UI', sans-serif;
+    font-size: 16px;
+    font-weight: 600;
+    color: #f1f5f9;
+    background: transparent;
+}
+
+#TaskTitle[concluida="true"] {
+    color: #64748b;
+    text-decoration: line-through;
+}
+
+#TaskDesc {
+    font-size: 13px;
+    color: #cbd5e1;
+    background: transparent;
+}
+
+#TaskDate {
+    font-size: 12px;
+    color: #94a3b8;
+    background: transparent;
+}
+
+#TaskTag {
+    font-size: 11px;
+    padding: 3px 9px;
+    border-radius: 5px;
+    background-color: rgba(99, 102, 241, 0.15);
+    color: #cbd5e1;
+}
+
+#PriorityBadge {
+    font-family: 'JetBrains Mono', 'Consolas', monospace;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 6px;
+    min-height: 0;
+}
+
+#StatusBadge {
+    font-family: 'JetBrains Mono', 'Consolas', monospace;
+    font-size: 11px;
+    font-weight: 600;
+    color: #f97316;
+    background: transparent;
+}
+
+#StatusBadge[concluida="true"] {
+    color: #10b981;
+}
+
+#TaskAction {
+    background-color: rgba(99, 102, 241, 0.12);
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    color: #cbd5e1;
+    padding: 0;
+    min-height: 0;
+}
+
+#TaskAction:hover {
+    background-color: rgba(236, 72, 153, 0.25);
+    color: #ffffff;
+}
+
+/* --- MODAL (ADICIONAR/EDITAR TAREFA) --- */
+#ModalCard {
+    background-color: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #1a2847, stop:1 #1e293b);
+    border: 1px solid rgba(99, 102, 241, 0.35);
+    border-radius: 16px;
+}
+
+#ModalTitle {
+    font-family: 'Poppins', 'Segoe UI', sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: #f1f5f9;
+    background: transparent;
+}
+
+#ModalClose {
+    background: transparent;
+    border: none;
+    color: rgba(241, 245, 249, 0.6);
+    font-size: 14px;
+    border-radius: 6px;
+    padding: 0;
+    min-height: 0;
+}
+
+#ModalClose:hover {
+    background-color: rgba(239, 68, 68, 0.2);
+    color: #ffffff;
+}
+
+#ModalFieldLabel {
+    color: #cbd5e1;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.4px;
+    background: transparent;
+    padding-bottom: 2px;
+}
+
+/* --- EMPTY STATE --- */
+#EmptyIcon {
+    font-size: 56px;
+    background: transparent;
+}
+
+#EmptyTitle {
+    font-family: 'Poppins', 'Segoe UI', sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+    color: #f1f5f9;
+    background: transparent;
+}
+
+#EmptyDesc {
+    font-size: 13px;
+    color: #94a3b8;
+    background: transparent;
+}
+
+/* --- TABELA DE DADOS (legado / relatórios) --- */
 QTableWidget {
-    background-color: #171a21;
-    alternate-background-color: #191c24;
-    color: #e8eaed;
+    background-color: #1a2847;
+    alternate-background-color: #1e293b;
+    color: #f1f5f9;
     gridline-color: transparent;
     border: none;
-    selection-background-color: rgba(84, 104, 255, 0.18);
+    selection-background-color: rgba(99, 102, 241, 0.2);
     selection-color: #ffffff;
 }
 
 QTableWidget::item {
     padding: 9px 8px;
-    border-bottom: 1px solid #21252f;
-}
-
-QTableWidget::item:selected {
-    background-color: rgba(84, 104, 255, 0.18);
-    color: #ffffff;
+    border-bottom: 1px solid rgba(99, 102, 241, 0.15);
 }
 
 QHeaderView::section {
-    background-color: #1a1d25;
-    color: #7d8494;
+    background-color: #1e293b;
+    color: #94a3b8;
     padding: 10px 8px;
     border: none;
-    border-bottom: 1px solid #232733;
+    border-bottom: 1px solid rgba(99, 102, 241, 0.2);
     font-weight: 700;
     font-size: 11px;
     letter-spacing: 0.6px;
-}
-
-QTableCornerButton::section {
-    background-color: #1a1d25;
-    border: none;
 }
 
 QScrollBar:vertical {
@@ -285,13 +466,13 @@ QScrollBar:vertical {
 }
 
 QScrollBar::handle:vertical {
-    background: #2a2f3d;
+    background: rgba(99, 102, 241, 0.35);
     border-radius: 5px;
     min-height: 24px;
 }
 
 QScrollBar::handle:vertical:hover {
-    background: #3a4152;
+    background: rgba(99, 102, 241, 0.6);
 }
 
 QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
@@ -304,23 +485,23 @@ QScrollBar:horizontal {
 }
 
 QScrollBar::handle:horizontal {
-    background: #2a2f3d;
+    background: rgba(99, 102, 241, 0.35);
     border-radius: 5px;
     min-width: 24px;
 }
 
 /* --- BARRA DE STATUS --- */
 QStatusBar {
-    background-color: #0f1115;
-    color: #7d8494;
-    border-top: 1px solid #1d212b;
+    background-color: #0f172a;
+    color: #94a3b8;
+    border-top: 1px solid rgba(99, 102, 241, 0.15);
     font-size: 12px;
 }
 
 QMessageBox {
-    background-color: #171a21;
+    background-color: #1a2847;
 }
 
 QMessageBox QLabel {
-    color: #e8eaed;
+    color: #f1f5f9;
 }

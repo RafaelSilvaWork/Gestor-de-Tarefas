@@ -35,6 +35,7 @@ sys.path.insert(0, RESOURCE_DIR)
 from views.login_window import LoginWindow
 from views.main_window import MainWindow
 from services.embedded_server import ServidorEmbutido, porta_disponivel
+from services.fonts import carregar_fontes
 
 HOST_API = "127.0.0.1"
 PORTA_API = 8000
@@ -100,6 +101,10 @@ if __name__ == "__main__":
     _garantir_env(WRITABLE_DIR)
 
     app = QApplication(sys.argv)
+
+    # Precisa carregar as fontes ANTES de aplicar o stylesheet, senão o QSS
+    # referencia famílias ainda não registradas e cai no fallback do sistema.
+    carregar_fontes(os.path.join(RESOURCE_DIR, "assets", "fonts"))
 
     style_path = os.path.join(RESOURCE_DIR, "assets", "styles.qss")
     try:

@@ -9,6 +9,12 @@ class TarefaCreate(BaseModel):
     prioridade: str = "Média"
 
 
+class TarefaUpdate(BaseModel):
+    titulo: str
+    descricao: Optional[str] = None
+    prioridade: str
+
+
 class TarefaResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 

@@ -22,7 +22,7 @@ class RegisterWindow(QDialog):
         lay.setSpacing(10)
 
         title = QLabel("Criar Conta")
-        title.setObjectName("AppTitle")
+        title.setObjectName("ModalTitle")
         subtitle = QLabel("Preencha os dados para se cadastrar")
         subtitle.setObjectName("AppSubtitle")
         lay.addWidget(title)
@@ -80,7 +80,7 @@ class LoginWindow(QDialog):
         lay.setSpacing(10)
 
         title = QLabel("Gestor de Tarefas")
-        title.setObjectName("AppTitle")
+        title.setObjectName("ModalTitle")
         subtitle = QLabel("Entre com sua conta para continuar")
         subtitle.setObjectName("AppSubtitle")
         lay.addWidget(title)

@@ -91,6 +91,68 @@ def test_isolamento_de_tarefas_entre_usuarios(client):
     assert r3.status_code == 404
 
 
+def test_editar_tarefa(client):
+    token = _obter_token(client, username="ivan")
+    headers = {"Authorization": f"Bearer {token}"}
+
+    r = client.post("/tarefas", json={"titulo": "Rascunho", "prioridade": "Baixa"}, headers=headers)
+    tarefa_id = r.json()["id"]
+
+    r2 = client.put(
+        f"/tarefas/{tarefa_id}",
+        json={"titulo": "Versão final", "descricao": "Revisado", "prioridade": "Alta"},
+        headers=headers,
+    )
+    assert r2.status_code == 200
+    tarefa = r2.json()
+    assert tarefa["titulo"] == "Versão final"
+    assert tarefa["descricao"] == "Revisado"
+    assert tarefa["prioridade"] == "Alta"
+    assert tarefa["status"] == "Pendente"  # editar não deve mexer no status
+
+
+def test_editar_tarefa_inexistente(client):
+    token = _obter_token(client, username="judy")
+    headers = {"Authorization": f"Bearer {token}"}
+
+    r = client.put(
+        "/tarefas/9999",
+        json={"titulo": "X", "prioridade": "Alta"},
+        headers=headers,
+    )
+    assert r.status_code == 404
+
+
+def test_excluir_tarefa(client):
+    token = _obter_token(client, username="kevin")
+    headers = {"Authorization": f"Bearer {token}"}
+
+    r = client.post("/tarefas", json={"titulo": "Descartável", "prioridade": "Baixa"}, headers=headers)
+    tarefa_id = r.json()["id"]
+
+    r2 = client.delete(f"/tarefas/{tarefa_id}", headers=headers)
+    assert r2.status_code == 204
+
+    r3 = client.get("/tarefas", headers=headers)
+    assert r3.json() == []
+
+
+def test_excluir_tarefa_de_outro_usuario_falha(client):
+    token_a = _obter_token(client, username="laura")
+    headers_a = {"Authorization": f"Bearer {token_a}"}
+    r = client.post("/tarefas", json={"titulo": "Da Laura", "prioridade": "Média"}, headers=headers_a)
+    tarefa_id = r.json()["id"]
+
+    token_b = _obter_token(client, username="marco")
+    headers_b = {"Authorization": f"Bearer {token_b}"}
+
+    r2 = client.delete(f"/tarefas/{tarefa_id}", headers=headers_b)
+    assert r2.status_code == 404
+
+    r3 = client.get("/tarefas", headers=headers_a)
+    assert len(r3.json()) == 1
+
+
 def test_filtro_por_status_e_prioridade(client):
     token = _obter_token(client, username="heidi")
     headers = {"Authorization": f"Bearer {token}"}
