@@ -33,13 +33,14 @@ O backend (API) roda embutido no próprio processo do app — não existe mais u
 ## ✨ Funcionalidades
 
 - **Autenticação JWT** — registro e login, com senhas armazenadas via hash `bcrypt`.
-- **CRUD de tarefas** isolado por usuário (cada usuário só vê e altera suas próprias tarefas).
-- **Filtros** por status e prioridade.
+- **CRUD completo de tarefas** (criar, editar, concluir/reabrir, excluir) isolado por usuário.
+- **Cards de tarefa** com prioridade colorida, status e ações de editar/excluir, em vez de uma tabela genérica.
+- **Modal de criar/editar tarefa**, com filtros por status e prioridade em pills.
 - **Painel analítico** com gráfico de rosca e indicadores (total, concluídas, taxa de conclusão).
 - **Navegação lateral colapsável** (menu ☰), separando Painel e Tarefas.
 - **Notificações na bandeja do sistema** (`QSystemTrayIcon`) ao criar ou concluir uma tarefa.
 - **Exportação de relatórios** do histórico de tarefas em **CSV** e **PDF** formatado.
-- **Tema visual profissional** (dark mode) via Qt Style Sheets.
+- **Design system autoral** (índigo/magenta/teal sobre deep navy), com Poppins/Inter/JetBrains Mono embutidas e micro-interações (glow animado no hover dos cards).
 
 ---
 
@@ -54,7 +55,8 @@ O backend (API) roda embutido no próprio processo do app — não existe mais u
 
 ### **Frontend Desktop**
 - **PyQt5** — interface gráfica nativa.
-- **QSS (Qt Style Sheets)** — tema dark customizado.
+- **QSS (Qt Style Sheets)** — design system customizado, com gradientes e animações de hover feitas em código (`QPropertyAnimation` + `QGraphicsDropShadowEffect`).
+- **Poppins / Inter / JetBrains Mono** — fontes embutidas via `QFontDatabase` (SIL Open Font License).
 - **QtChart** — gráfico de rosca do painel analítico.
 - **QtPrintSupport** — geração de relatórios em PDF.
 - **Requests** — comunicação com a API.
@@ -84,7 +86,7 @@ Gestor-de-Tarefas/
 │   └── requirements-dev.txt  # Dependências de desenvolvimento (inclui pytest)
 │
 ├── desktop/                  # Cliente Gráfico Nativo
-│   ├── assets/                # Estilos QSS e ícone do executável
+│   ├── assets/                # Estilos QSS, fontes embutidas e ícone do executável
 │   ├── services/               # Integração HTTP com a API + servidor embutido (empacotado)
 │   ├── views/                   # Janelas e componentes em PyQt5
 │   ├── main.py                # Ponto de entrada da GUI
